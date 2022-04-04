@@ -636,6 +636,8 @@ p_df1=p_df2
 
 ENDDO BFGs_loop
 
+CALL E_rows_MPIfun(Nbs,bk_cal,Nbasis,f1,C1,ERR,1)
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
