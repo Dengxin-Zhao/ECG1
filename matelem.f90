@@ -38,7 +38,7 @@ REAL(dp),PRIVATE,ALLOCATABLE,DIMENSION(:,:)::p_tr_invtAkl_Jij
 !=============================
 !matrix and variables only used for basis with L=0,M=0
 !=============================
-INTEGER,PRIVATE,ALLOCATABLE::p_mk,p_ml
+INTEGER,PRIVATE::p_mk,p_ml
 REAL(dp),PRIVATE,ALLOCATABLE,DIMENSION(:)::p_vk,p_vl,p_tvl
 REAL(dp),PRIVATE::p_tau1,p_tau2,p_tau3
 REAL(dp),PRIVATE,ALLOCATABLE,DIMENSION(:,:)::p_eta1,p_eta2
