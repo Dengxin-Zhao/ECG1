@@ -1636,7 +1636,7 @@ DO j=1,Glob_Np
     temp=p_inv_All(i,p_ml)*p_inv_All(p_ml,j)/p_inv_All(p_ml,p_ml)&
     &+THREE*p_inv_All(i,j)/TWO
     Fkk_Fll(i,j)=Fkk_Fll(i,j)+temp
-    Fkk_Fll(j,i)=Fkk_Fll(j,i)+temp
+    Fkk_Fll(j,i)=Fkk_Fll(i,j)
   ENDDO
 ENDDO
   
