@@ -1100,7 +1100,7 @@ dHkl_dLk=ZERO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
 !extract parameters Lk,Ll,Ak,Al from Glob_Lk
-CALL paras_0_0_fun(bk,bl)  
+CALL paras_1_0_fun(bk,bl)  
     
 !sum of symmetry loop
 perm_loop:DO ip=1,Glob_Nperm
