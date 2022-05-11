@@ -1975,10 +1975,10 @@ DO j=1,Glob_Np
         temp2=temp2+p_tKkl(i,k)*Glob_Jij(k,L,ii,jj)*p_inv_tAkl(L,j)
       ENDDO
     ENDDO
-    tQkl_tDkl(i,j)=((ONE-p_eta2(ii,jj)/p_eta1(ii,jj)/p_tau3)*temp/TWO&
-    &+(temp1+temp2)/p_tau3/THREE&
-    &-p_eta2(ii,jj)*p_tKkl(i,j)/THREE/(p_tau3**2))&
-    &/(p_eta1(ii,jj)**(THREE/TWO))
+    temp=(ONE-p_eta2(ii,jj)/p_eta1(ii,jj)/p_tau3)*temp/TWO
+    temp=temp+(temp1+temp2)/p_tau3/THREE
+    temp=temp-p_eta2(ii,jj)*p_tKkl(i,j)/THREE/(p_tau3**2)
+    tQkl_tDkl(i,j)=temp/(p_eta1(ii,jj)**(THREE/TWO))
   ENDDO
 ENDDO
 
@@ -2028,8 +2028,8 @@ ENDDO loop1
 !sum of all gradient of Coulomb potential
 !============================
 
-p_dVkl_Coulomb_dLk=(p_Vkl_Coulomb/p_Skl)*p_dSkl_dLk+&
-(TWO/SQRTPI)*p_Skl*dVkl_1_dLk
+p_dVkl_Coulomb_dLk=(p_Vkl_Coulomb/p_Skl)*p_dSkl_dLk&
+&+(TWO/SQRTPI)*p_Skl*dVkl_1_dLk
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
