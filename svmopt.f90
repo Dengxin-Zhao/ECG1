@@ -161,6 +161,8 @@ ENDIF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 CALL pvars_MPImat(Nb_start,1) 
+bk_cal(1)=1
+bk_cal(2)=Nb_start
 CALL E_rows_MPIfun(Nb_start,bk_cal,Nb_start,Eval,Ci(1:Nb_start),ERR,1)
 IF(ERR/=0)PAUSE'eigen solution error before generating new basis'
 CALL pvars_MPImat(Nb_start,0) 
