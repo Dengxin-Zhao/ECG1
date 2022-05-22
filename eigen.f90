@@ -112,7 +112,7 @@ INTEGER,INTENT(IN)::nb,Nbasis
 REAL(dp),INTENT(OUT)::Ei
 INTEGER,INTENT(OUT)::ERR
 !@@@@@@@@@@@@@@@@@@@@@@@@@@
-INTEGER,PARAMETER::bracket_num=10
+INTEGER,PARAMETER::bracket_num=100
 !@@@@@@@@@@@@@@@@@@@@@@@@@@
 INTEGER::i,j,k,ib,myid,ERROR
 REAL(dp)::Sk(Nbasis),Hk(Nbasis)
