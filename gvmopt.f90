@@ -667,8 +667,7 @@ SUBROUTINE Lk_stepsrch_MPIfun(Nbs,bk_cal,Nbasis,f1,C1,f2,C2,TOL_dx)
 ! TOL_dx: tolerance of dx 
 !==============================
 IMPLICIT NONE
-INTEGER,INTENT(IN)::Nbs,Nbasis
-INTEGER,INTENT(IN)::bk_cal(Nbs)
+INTEGER,INTENT(IN)::Nbs,Nbasis,bk_cal(2)
 REAL(dp),INTENT(IN)::TOL_dx
 REAL(dp),INTENT(IN)::f1,C1(Nbasis)
 REAL(dp),INTENT(OUT)::f2,C2(Nbasis)
