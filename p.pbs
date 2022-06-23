@@ -1,1 +1,37 @@
-
+#!/bin/bash 
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#PBS -N H2  
+#PBS -l nodes=cu15:ppn=8
+#PBS -l walltime=2000:00:00
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#PBS -q high    
+#PBS -e ERR.info  
+#PBS -o TASK.info 
+#PBS -V 
+#PBS -S /bin/bash 
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+EXEC=./ECG4-1/bin/main          
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# setup hostfile 
+  echo "host: " 
+# cat $PBS_JOBID-$PBS_JOBCOOKIE.hosts 
+  echo "--------Begin-------------------------------------------" 
+# This job's working directory 
+  echo Working directory is $PBS_O_WORKDIR 
+# go to work dir 
+cd $PBS_O_WORKDIR 
+ echo "Beginning time is: " 
+ echo Time is `date` 
+ echo Directory is `pwd` 
+ NP=`cat $PBS_NODEFILE|wc -l` 
+ echo "Numbers of Processors: $NP" 
+ echo "--------------------------------------------------------"
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# running 
+/opt/intel/compilers_and_libraries_2018.3.222/linux/mpi/intel64/bin/mpirun -np $NP -machinefile $PBS_NODEFILE $EXEC >test.out 
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# clean 
+echo "--------Finish-------------------------------------------" 
+echo "Finishing time is: " 
+echo Time is `date` 
+echo "--------Finish-------------------------------------------"
