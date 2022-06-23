@@ -5,14 +5,14 @@ vpath %.f90 source
 objs=globvars.o auxfun.o eigen.o symmetry.o matelem.o  \
 MPImat.o gvmopt.o svmopt.o IO.o main.o
 
-LIBS=-L/../lib -lmkl_scalapack_lp64 -lmkl_lapack95_lp64  \
+libs=-L/../lib -lmkl_scalapack_lp64 -lmkl_lapack95_lp64  \
 -lmkl_blas95_lp64 -lmkl_blacs_intelmpi_lp64 -lmkl_intel_lp64 \
 -lmkl_sequential -lmkl_core
 
 ALL : main MOVE clean
 
 main : $(objs)
-	$(F90) -o main $(LIBS) $(objs) 
+	$(F90) -o main $(libs) $(objs) 
 
 main.o : main.f90
 	$(F90) -c $?
