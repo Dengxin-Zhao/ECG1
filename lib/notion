@@ -1,1 +1,3 @@
-
+libmkl_core.a is not here for its too big to upload into github  
+therefore after download this program, one should copy libmkl_core.a  
+in lib file to ensure the program running appropriately
