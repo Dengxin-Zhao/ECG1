@@ -23,10 +23,10 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE pvars_MPImat(Nbasis,case_num)
-!=============================OK
-!allocate the MPI allocation variables used in forming H,S matrix and gradient matrix
-!in case of calculating it every time basis chage, one can allocate once
-!making Nbasis=Glob_Nbasis_final
+!===================================================
+!allocate the MPI allocation variables used in forming 
+!H,S matrix and gradient matrix.
+!===================================================
 !input:
 !  Nbasis: present basis number
 !case_num: select case
@@ -35,7 +35,7 @@ SUBROUTINE pvars_MPImat(Nbasis,case_num)
 ! p_Nproc: column numbers minipulated by each process
 !p_displs: displacement when gatherv 
 !p_bl_cal: columns calculated by each pocess
-!============================
+!===================================================
 IMPLICIT NONE
 INTEGER,INTENT(IN)::Nbasis
 INTEGER,INTENT(IN)::case_num
@@ -60,9 +60,13 @@ IF(N_last==0)THEN
 p_Nmax=p_Nmax-1
 ENDIF
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 ALLOCATE(p_Nproc(Glob_numprocs))
 ALLOCATE(p_displs(Glob_numprocs))
 ALLOCATE(p_bl_cal(p_Nmax,Glob_numprocs))
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !numbers of parameters manipulated by each procs
 DO i=1,Glob_numprocs   
@@ -80,8 +84,6 @@ DO i=2,Glob_numprocs
   p_displs(i)=p_displs(i-1)+p_Nproc(i-1)
 ENDDO
 ENDIF
-
-!!!!!!!!!!!!!!!!!!OK
 
 !basis calculated by each process
 p_bl_cal=0
@@ -118,31 +120,29 @@ END SUBROUTINE pvars_MPImat
 !calculaiton of Hamilton and overlap matrix and  diagonalization
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE E_rows_MPIfun(Nbs,bk_cal,Nbasis,Eval,Ci,ERR,case_num)
-!==============================
+SUBROUTINE Eval_MPIfun(Nbasis,Nbs,bk_cal,Eval,Ci,ERR,case_num)
+!===================================================
 !recalculate specified rows (and columns) of H and S matrix 
-!be aware of that once we call this subroutine
-!Nbk rows(and columns) in Glob_S and Glob_H will change
-!=============================
+!bk_cal(1)->bk_cal(2)
+!===================================================
 !input:
-!    Nbk: the number of rows to be recalculated
-! bk_cal: basis index from bk_cal(1)->bk_cal(2)
 ! Nbasis: present numbers of basis
+!     Nb: numbers of basis to be recalculated
+! bk_cal: basis index from bk_cal(1)->bk_cal(2) to recalculated
 !output:
 !   Eval: eigenvalue energy
 !     Ci: the eigenvector corresbonding to Eval
-!case_num: 
-!    0: one_diag_MPIfun
-!    1: full_diag_MPIfun
 !  ERR: 
 !    0: within overlap threshold
 !    1: exceed overlap threshold
-!==============================
+!case_num: 
+!    0: one_diag_MPIfun
+!    1: full_diag_MPIfun
+!===================================================
 IMPLICIT NONE
-INTEGER,INTENT(IN)::Nbs,Nbasis
-INTEGER,INTENT(IN)::case_num,bk_cal(2)
-INTEGER,INTENT(OUT)::ERR
+INTEGER,INTENT(IN)::Nbasis,Nbs,bk_cal(2),case_num
 REAL(dp),INTENT(OUT)::Eval,Ci(Nbasis)
+INTEGER,INTENT(OUT)::ERR
 
 INTEGER::i,j,k,myid
 INTEGER::bk,bl,Nproc,bl_cal(p_Nmax)
@@ -166,9 +166,9 @@ DO i=1,Nproc
     
   bl=bl_cal(i)
   IF(Glob_basis_form==0)THEN
-    CALL HS_0_0_fun(bk,bl,send_S(i),send_H(i))
+    CALL HS_0_fun(bk,bl,send_S(i),send_H(i))
   ELSEIF(Glob_basis_form==1)THEN
-    CALL HS_1_0_fun(bk,bl,send_S(i),send_H(i))
+    CALL HS_1_fun(bk,bl,send_S(i),send_H(i))
   ENDIF
 
 ENDDO
@@ -198,8 +198,8 @@ SELECT CASE(case_num)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 CASE(0)
 
-CALL one_diag_MPIfun(bk_cal(1),Nbasis,Eval,ERR)
-Ci(:)=ZERO
+CALL one_diag_MPIfun(Nbasis,bk_cal(1),Eval,ERR)
+Ci(:)=0.0_dp
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 CASE(1)
@@ -211,26 +211,88 @@ END SELECT
 
 CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
 RETURN
-END SUBROUTINE E_rows_MPIfun
+END SUBROUTINE Eval_MPIfun
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!overlap check function
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+SUBROUTINE Skl_check_MPIfun(Nbasis,bk,ERR)
+!===================================================
+!check wheather the overlap exceeds the threshold
+!===================================================
+!input:
+!Nbasis: present numbers of basis
+!    bk: the bk_th row of overlap S matrix
+!output:
+!  ERR
+!      0: overlap within overlap threshold 
+!      1: overlap exceed overlap threshold
+!===================================================
+IMPLICIT NONE
+INTEGER,INTENT(IN)::Nbasis,bk
+INTEGER,INTENT(OUT)::ERR
+
+INTEGER::i,j,k,myid
+INTEGER::bl,Nproc,bl_cal(p_Nmax)
+
+CALL MPI_COMM_RANK(MPI_COMM_WORLD,myid,Glob_MPIerr)
+CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
+
+ERR=0
+Nproc=p_Nproc(myid+1)
+bl_cal(:)=p_bl_cal(:,myid+1)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!============================
+!check the overlap 
+!============================
+
+IF(Nproc/=0)THEN
+DO i=1,Nproc
+    
+  bl=bl_cal(i)
+  IF(Glob_basis_form==0)THEN
+    CALL Skl_0_check_fun(bk,bl,ERR)
+  ELSEIF(Glob_basis_form==1)THEN
+     CALL Skl_1_check_fun(bk,bl,ERR)
+  ENDIF
+
+  IF(ERR/=0)EXIT
+
+ENDDO
+ENDIF
+
+k=ERR
+CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
+CALL MPI_ALLREDUCE(k,ERR,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,Glob_MPIerr)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
+
+RETURN
+END SUBROUTINE Skl_check_MPIfun
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !gradient of energy with respect to Lk
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE dE_dLk_MPIfun(Nbk,bk_cal,Nbasis,Eval,Ci,dE)
-!================================OK
-!calculate the graddient matrix element with parallel approach(MPI)
+SUBROUTINE dE_dLk_MPIfun(Nbasis,Nbk,bk_cal,Eval,Ci,dE)
+!===================================================
+!calculate the energy gradient with respect to Lk
+!===================================================
 !input:
-!   Nbk: number of basis to be calculated
+!Nbasis: present basis nunber
+!    Nb: basis number
 !bk_cal: basis index from bk_cal(1)->bk_cal(2)
 !  Eval: present eigenvalue 
 !    Ci: eigenvector corresbonding to Eval
 !output:
-!    dE: gradient of energy 
-!================================
+!    dE: gradient of energy with respect to Lk 
+!===================================================
 IMPLICIT NONE
-INTEGER,INTENT(IN)::Nbk,Nbasis
-INTEGER,INTENT(IN)::bk_cal(2)
+INTEGER,INTENT(IN)::Nbasis,Nbk,bk_cal(2)
 REAL(dp),INTENT(IN)::Eval,Ci(Nbasis)
 REAL(dp),INTENT(OUT)::dE(Nbk*Glob_NLk)
 
@@ -253,23 +315,23 @@ bl_cal(:)=p_bl_cal(:,myid+1)
 index=0
 bk_loop:DO bk=bk_cal(1),bk_cal(2)
     
-send_dE(:)=ZERO
-recv_dE(:)=ZERO
+send_dE(:)=0.0_dp
+recv_dE(:)=0.0_dp
 
 IF(Nproc/=0)THEN   
 DO i=1,Nproc
     
   bl=bl_cal(i)
   IF(Glob_basis_form==0)THEN
-    CALL gradHS_0_0_fun(bk,bl,dS_dLk,dH_dLk)
+    CALL dHS_dLk_0_fun(bk,bl,dS_dLk,dH_dLk)
   ELSEIF(Glob_basis_form==1)THEN
-    CALL gradHS_1_0_fun(bk,bl,dS_dLk,dH_dLk)
+    CALL dHS_dLk_1_fun(bk,bl,dS_dLk,dH_dLk)
   ENDIF
   
   IF(bk==bl)THEN
-    send_dE=send_dE+Ci(bk)*Ci(bk)*(dH_dLk-Eval*dS_dLk)
+    send_dE(:)=send_dE(:)+Ci(bk)*Ci(bk)*(dH_dLk(:)-Eval*dS_dLk(:))
   ELSE
-    send_dE=send_dE+TWO*Ci(bk)*Ci(bl)*(dH_dLk-Eval*dS_dLk)
+    send_dE(:)=send_dE(:)+2.0_dp*Ci(bk)*Ci(bl)*(dH_dLk(:)-Eval*dS_dLk(:))
   ENDIF
   
 ENDDO
@@ -293,80 +355,20 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
 RETURN
 END SUBROUTINE dE_dLk_MPIfun   
     
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!overlap check function
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-SUBROUTINE overlap_check_MPIfun(bk,Nbasis,ERR)
-!==============================
-!check weather overlap of bk basis with others
-!=============================
-!input:
-!     bk: the bk_th row of overlap S matrix
-! Nbasis: present numbers of basis
-!output:
-!  ERR:
-!      0: overlap within overlap threshold 
-!      1: overlap exceed overlap threshold
-!==============================
-IMPLICIT NONE
-INTEGER,INTENT(IN)::bk,Nbasis
-INTEGER,INTENT(OUT)::ERR
-
-INTEGER::i,j,k,myid
-INTEGER::bl,Nproc,bl_cal(p_Nmax)
-
-CALL MPI_COMM_RANK(MPI_COMM_WORLD,myid,Glob_MPIerr)
-CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
-
-ERR=0
-Nproc=p_Nproc(myid+1)
-bl_cal(:)=p_bl_cal(:,myid+1)
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!============================
-!check the overlap 
-!============================
-
-IF(Nproc/=0)THEN
-DO i=1,Nproc
-    
-  bl=bl_cal(i)
-  IF(Glob_basis_form==0)THEN
-    CALL Skl_0_0_check_fun(bk,bl,ERR)
-  ELSEIF(Glob_basis_form==1)THEN
-     CALL Skl_1_0_check_fun(bk,bl,ERR)
-  ENDIF
-
-  IF(ERR/=0)EXIT
-
-ENDDO
-ENDIF
-
-k=ERR
-CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
-CALL MPI_ALLREDUCE(k,ERR,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,Glob_MPIerr)
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
-
-RETURN
-END SUBROUTINE overlap_check_MPIfun
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !correlation function gij for basis with L=0,M=0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
  
-SUBROUTINE gij_0_0_MPIfun(Nbasis)
-!===============================
+SUBROUTINE gij_0_MPIfun(Nbasis)
+!===================================================
 !thia subroutine calculates the Correlation function gij
 !and store them into gij.txt
+!===================================================
 !input:
 !  Nbasis: present basis number
 !output:
 ! correlation function gij stored in gij.txt
-!===============================
+!===================================================
 IMPLICIT NONE
 INTEGER,INTENT(IN)::Nbasis
 
@@ -399,7 +401,7 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
 !calculate the eigen value and eigen vector
 bk_cal(1)=1
 bk_cal(2)=Nbasis
-CALL E_rows_MPIfun(Nbasis,bk_cal,Nbasis,Eval,Ci,ERR,1)
+CALL Eval_MPIfun(Nbasis,Nbasis,bk_cal,Eval,Ci,ERR,1)
 
 IF(myid==Glob_root)THEN 
   OPEN(unit=2,file='log.txt',position='append')
@@ -425,7 +427,7 @@ index=0
 ii_loop:DO ii=1,Glob_Nparticle
 jj_loop:DO jj=ii,Glob_Nparticle
 index=index+1
-gij(index)=ZERO
+gij(index)=0.0_dp
 IF(Glob_gij_onoff(index)/=0)THEN
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -437,9 +439,9 @@ DO i=1,Nproc
     
   bl=bl_cal(i)
 
-  CALL gij_kl_0_0_fun(bk,bl,ii,jj,R,temp)
+  CALL gij_kl_0_fun(bk,bl,ii,jj,R,temp)
   
-  gij(index)=gij(index)+FOUR*PI*R*R*Ci(bk)*Ci(bl)*temp
+  gij(index)=gij(index)+4.0_dp*PI*R*R*Ci(bk)*Ci(bl)*temp
 
 ENDDO
 ENDIF
@@ -493,21 +495,22 @@ CALL pvars_MPImat(Nbasis,0)
 CALL MPI_BARRIER(MPI_COMM_WORLD,GLob_MPIerr)
 
 RETURN
-END SUBROUTINE gij_0_0_MPIfun
+END SUBROUTINE gij_0_MPIfun
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !correlation function gij for basis with L=0,M=0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE gij_1_0_MPIfun(Nbasis)
-!==========================
+SUBROUTINE gij_1_MPIfun(Nbasis)
+!===================================================
 !this subroutine calculates the correlation function
 !for basis with L=1,M=0
+!===================================================
 !input:
 !  Nbasis: present basis number
 !output:
 ! correlation function stored in gij.txt
-!==========================
+!===================================================
 IMPLICIT NONE
 INTEGER,INTENT(IN)::Nbasis
 
@@ -540,7 +543,7 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
 !calculate the eigen value and eigen vector
 bk_cal(1)=1
 bk_cal(2)=Nbasis
-CALL E_rows_MPIfun(Nbasis,bk_cal,Nbasis,Eval,Ci,ERR,1)
+CALL Eval_MPIfun(Nbasis,Nbasis,bk_cal,Eval,Ci,ERR,1)
 
 IF(myid==Glob_root)THEN 
   OPEN(unit=2,file='log.txt',position='append')
@@ -570,7 +573,7 @@ index=0
 ii_loop:DO ii=1,Glob_Nparticle
 jj_loop:DO jj=ii,Glob_Nparticle
 index=index+1
-gij(index)=ZERO
+gij(index)=0.0_dp
 
 IF(Glob_gij_onoff(index)/=0)THEN
 
@@ -583,9 +586,9 @@ DO i=1,Nproc
     
   bl=bl_cal(i)
 
-  CALL gij_kl_1_0_fun(bk,bl,ii,jj,Rxy,Rz,temp)
+  CALL gij_kl_1_fun(bk,bl,ii,jj,Rxy,Rz,temp)
   
-  gij(index)=gij(index)+TWO*PI*Rxy*Ci(bk)*Ci(bl)*temp
+  gij(index)=gij(index)+2.0_dp*PI*Rxy*Ci(bk)*Ci(bl)*temp
 
 ENDDO
 ENDIF
@@ -640,26 +643,29 @@ CALL pvars_MPImat(Nbasis,0)
 CALL MPI_BARRIER(MPI_COMM_WORLD,GLob_MPIerr)
 
 RETURN
-END SUBROUTINE gij_1_0_MPIfun
+END SUBROUTINE gij_1_MPIfun
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !interparticle distance <rij> for basis with L=0,M=0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE rij_0_0_MPIfun(Nbasis)
-!===========================
+SUBROUTINE rij_0_MPIfun(Nbasis,v)
+!===================================================
 !this subroutine calculates the expectation value
 !of interparticle distance for basis with L=0,M=0
+!===================================================
 !input:
-!  Nbasis:present basis number
+!  Nbasis: present basis number
+!       v: power of interparticle distance
 !output:
 !  the expetation value of rij stored in log.txt
-!===========================
+!===================================================
 IMPLICIT NONE
 INTEGER,INTENT(IN)::Nbasis
+REAL(dp)::v
 
-INTEGER::i,j,k,L,index,myid,ERR
-INTEGER::ii,jj,bk,bl,Nproc,bk_cal(2)
+INTEGER::i,j,k,L,ii,jj,index,myid,ERR
+INTEGER::bk,bl,Nproc,bk_cal(2)
 INTEGER,ALLOCATABLE::bl_cal(:)
     
 REAL(dp)::Eval,Ci(Nbasis)
@@ -683,7 +689,7 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
 !calculate the eigen value and eigen vector
 bk_cal(1)=1
 bk_cal(2)=Nbasis
-CALL E_rows_MPIfun(Nbasis,bk_cal,Nbasis,Eval,Ci,ERR,1)
+CALL Eval_MPIfun(Nbasis,Nbasis,bk_cal,Eval,Ci,ERR,1)
   
 IF(myid==Glob_root)THEN 
   OPEN(unit=2,file='log.txt',position='append')
@@ -701,7 +707,7 @@ index=0
 ii_loop:DO ii=1,Glob_Nparticle
 jj_loop:DO jj=ii,Glob_Nparticle
 index=index+1
-rij=ZERO
+rij=0.0_dp
 IF(Glob_rij_onoff(index)/=0)THEN
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -715,7 +721,7 @@ DO i=1,Nproc
       
   bl=bl_cal(i)
   
-  CALL rij_kl_0_0_fun(bk,bl,ii,jj,temp)
+  CALL rij_kl_0_fun(bk,bl,ii,jj,v,temp)
     
   rij=rij+Ci(bk)*Ci(bl)*temp
   
@@ -763,23 +769,25 @@ CALL pvars_MPImat(Nbasis,0)
 CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
 
 RETURN
-END SUBROUTINE rij_0_0_MPIfun
+END SUBROUTINE rij_0_MPIfun
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !interparticle distance <rij> for basis with L=1,M=0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE rij_1_0_MPIfun(Nbasis)
-!==================================
+SUBROUTINE rij_1_MPIfun(Nbasis,v)
+!===================================================
 !this subroutine calculates the expectation value
 !of interparticle distance for basis with L=1,M=0
+!===================================================
 !input:
 !  Nbasis: present basis number
 !output:
 !  the expetation value of rij stored in log.txt
-!=================================
+!===================================================
 IMPLICIT NONE
 INTEGER,INTENT(IN)::Nbasis
+REAL(dp),INTENT(IN)::v
   
 INTEGER::i,j,k,L,index,myid,ERR
 INTEGER::ii,jj,bk,bl,Nproc,bk_cal(2)
@@ -806,8 +814,8 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
 !calculate the eigen value and eigen vector
 bk_cal(1)=1
 bk_cal(2)=Nbasis
-CALL E_rows_MPIfun(Nbasis,bk_cal,Nbasis,Eval,Ci,ERR,1)
-    
+CALL Eval_MPIfun(Nbasis,Nbasis,bk_cal,Eval,Ci,ERR,1)
+
 IF(myid==Glob_root)THEN 
   OPEN(unit=2,file='log.txt',position='append')
   WRITE(2,*)'=================================================' 
@@ -824,7 +832,7 @@ index=0
 ii_loop:DO ii=1,Glob_Nparticle
 jj_loop:DO jj=ii,Glob_Nparticle
 index=index+1
-rij=ZERO
+rij=0.0_dp
 
 IF(Glob_rij_onoff(index)/=0)THEN
   
@@ -839,7 +847,7 @@ DO i=1,Nproc
         
   bl=bl_cal(i)
     
-  CALL rij_kl_1_0_fun(bk,bl,ii,jj,temp)
+  CALL rij_kl_1_fun(bk,bl,ii,jj,v,temp)
       
   rij=rij+Ci(bk)*Ci(bl)*temp
     
@@ -859,10 +867,7 @@ ENDIF
 
 IF(myid==Glob_root)THEN 
   
-!time calculate  
 CALL time_cal_fun(time_st)
-      
-!write present status in log file
 WRITE(2,'(A14,3I10,f26.16)')time_st,index,ii,jj,rij
     
 ENDIF
@@ -888,7 +893,7 @@ CALL pvars_MPImat(Nbasis,0)
 CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
 
 RETURN
-END SUBROUTINE rij_1_0_MPIfun
+END SUBROUTINE rij_1_MPIfun
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

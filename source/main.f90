@@ -1,11 +1,13 @@
 PROGRAM MAIN
-!============================================
-!the main program for gradient optimization of ECGs
-!ECG basis form: 
+!====================================================
+!structure calculation program based on ECG basis
+!====================================================
+!ECG basis form:
 !L=0,M=0: psi=exp(-rAr)
 !L=1,M=0: psi=Z_mk*exp(-rAr)
+!====================================================
 !written by @ Dengxin Zhao
-!============================================
+!====================================================
 USE MPI
 USE globvars
 USE IO
@@ -66,7 +68,7 @@ IF((Glob_increase_num==0).OR.(Glob_Nbasis_start==Glob_Nbasis_final))THEN
 
 DO i=1,Glob_opt_rounds_limit
   IF(i>1)Glob_opt_reach=1
-  CALL gvm_opt(Glob_gvm_batch,Glob_Nbasis_start,Glob_gvm_ITmax,Glob_gvm_rounds) 
+  CALL gvm_opt(Glob_Nbasis_start,Glob_gvm_batch,Glob_gvm_ITmax,Glob_gvm_rounds) 
 ENDDO
 
 ELSE
@@ -85,7 +87,7 @@ CALL basis_increase(bi,bj,Glob_gvm_ITmax,Glob_gvm_ITmax,Glob_svm_IT1,Glob_svm_IT
 
 !GVM optimization 
 Glob_opt_reach=1
-CALL gvm_opt(Glob_gvm_batch,bj,Glob_gvm_ITmax,Glob_gvm_rounds) 
+CALL gvm_opt(bj,Glob_gvm_batch,Glob_gvm_ITmax,Glob_gvm_rounds) 
 
 ENDDO increase_loop1
 
@@ -98,13 +100,13 @@ CALL basis_increase(bi,bj,Glob_gvm_ITmax,Glob_gvm_ITmax,Glob_svm_IT1,Glob_svm_IT
   
 !GVM optimization
 Glob_opt_reach=1
-CALL gvm_opt(Glob_gvm_batch,bj,Glob_gvm_ITmax,Glob_gvm_rounds) 
+CALL gvm_opt(bj,Glob_gvm_batch,Glob_gvm_ITmax,Glob_gvm_rounds) 
 
 ENDIF
 
 DO i=1,Glob_opt_rounds_limit
   Glob_opt_reach=1
-  CALL gvm_opt(1,Glob_Nbasis_final,Glob_gvm_ITmax,Glob_gvm_rounds) 
+  CALL gvm_opt(Glob_Nbasis_final,Glob_gvm_batch,Glob_gvm_ITmax,Glob_gvm_rounds) 
 ENDDO
 
 ENDIF
@@ -176,7 +178,7 @@ IF((Glob_increase_num==0).OR.(Glob_Nbasis_start==Glob_Nbasis_final))THEN
  
 DO i=1,Glob_opt_rounds_limit
   IF(i>1)Glob_opt_reach=1
-  CALL gvm_opt(Glob_gvm_batch,Glob_Nbasis_start,Glob_gvm_ITmax,Glob_gvm_rounds)
+  CALL gvm_opt(Glob_Nbasis_start,Glob_gvm_batch,Glob_gvm_ITmax,Glob_gvm_rounds)
   Glob_opt_reach=1
   CALL svm_opt(Glob_Nbasis_start,Glob_svm_IT1,Glob_svm_IT2,Glob_svm_rounds)
 ENDDO
@@ -197,7 +199,7 @@ CALL basis_increase(bi,bj,Glob_gvm_ITmax,Glob_gvm_ITmax,Glob_svm_IT1,Glob_svm_IT
 
 !GVM optimization
 Glob_opt_reach=1
-CALL gvm_opt(Glob_gvm_batch,bj,Glob_gvm_ITmax,Glob_gvm_rounds)
+CALL gvm_opt(bj,Glob_gvm_batch,Glob_gvm_ITmax,Glob_gvm_rounds)
 
 !SVM optimization
 Glob_opt_reach=1
@@ -215,7 +217,7 @@ CALL basis_increase(bi,bj,Glob_gvm_ITmax,Glob_gvm_ITmax,Glob_svm_IT1,Glob_svm_IT
 
 !GVM optimization
 Glob_opt_reach=1
-CALL gvm_opt(Glob_gvm_batch,bj,Glob_gvm_ITmax,Glob_gvm_rounds) 
+CALL gvm_opt(bj,Glob_gvm_batch,Glob_gvm_ITmax,Glob_gvm_rounds) 
 
 !SVM optimization
 Glob_opt_reach=1
@@ -225,7 +227,7 @@ ENDIF
 
 DO i=1,Glob_opt_rounds_limit
   Glob_opt_reach=1   
-  CALL gvm_opt(Glob_gvm_batch,Glob_Nbasis_final,Glob_gvm_ITmax,Glob_gvm_rounds) 
+  CALL gvm_opt(Glob_Nbasis_final,Glob_gvm_batch,Glob_gvm_ITmax,Glob_gvm_rounds) 
   Glob_opt_reach=1
   CALL svm_opt(Glob_Nbasis_final,Glob_svm_IT1,Glob_svm_IT2,Glob_svm_rounds)
 ENDDO
@@ -243,7 +245,7 @@ IF((Glob_increase_num==0).OR.(Glob_Nbasis_start==Glob_Nbasis_final))THEN
  
 DO i=1,Glob_opt_rounds_limit
   IF(i>1)Glob_opt_reach=1
-  CALL gvm_svm_opt(Glob_gvm_batch,Glob_Nbasis_start,Glob_gvm_ITmax,&
+  CALL gvm_svm_opt(Glob_Nbasis_start,Glob_gvm_batch,Glob_gvm_ITmax,&
   &Glob_svm_IT1,Glob_svm_IT2,max(Glob_gvm_rounds,Glob_svm_rounds))  
 ENDDO 
 
@@ -263,7 +265,7 @@ CALL basis_increase(bi,bj,Glob_gvm_ITmax,Glob_gvm_ITmax,Glob_svm_IT1,Glob_svm_IT
 
 !GVM+SVM optimization
 Glob_opt_reach=1
-CALL gvm_svm_opt(Glob_gvm_batch,bj,Glob_gvm_ITmax,&
+CALL gvm_svm_opt(bj,Glob_gvm_batch,Glob_gvm_ITmax,&
 &Glob_svm_IT1,Glob_svm_IT2,max(Glob_gvm_rounds,Glob_svm_rounds))   
 
 ENDDO increase_loop4
@@ -277,14 +279,14 @@ CALL basis_increase(bi,bj,Glob_gvm_ITmax,Glob_gvm_ITmax,Glob_svm_IT1,Glob_svm_IT
 
 !GVM+SVM optimization
 Glob_opt_reach=1
-CALL gvm_svm_opt(Glob_gvm_batch,bj,Glob_gvm_ITmax,&
+CALL gvm_svm_opt(bj,Glob_gvm_batch,Glob_gvm_ITmax,&
 &Glob_svm_IT1,Glob_svm_IT2,max(Glob_gvm_rounds,Glob_svm_rounds)) 
   
 ENDIF
   
 DO i=1,Glob_opt_rounds_limit
   Glob_opt_reach=1
-  CALL gvm_svm_opt(Glob_gvm_batch,Glob_Nbasis_final,Glob_gvm_ITmax,&
+  CALL gvm_svm_opt(Glob_Nbasis_final,Glob_gvm_batch,Glob_gvm_ITmax,&
     &Glob_svm_IT1,Glob_svm_IT2,max(Glob_gvm_rounds,Glob_svm_rounds))  
 ENDDO
 
@@ -303,9 +305,9 @@ IF(Glob_task_onoff(2)==1)THEN
 !========================
 
 IF(Glob_basis_form==0)THEN
-  CALL gij_0_0_MPIfun(Glob_Nbasis_final)
+  CALL gij_0_MPIfun(Glob_Nbasis_final)
 ELSEIF(Glob_basis_form==1)THEN
-  CALL gij_1_0_MPIfun(Glob_Nbasis_final)
+  CALL gij_1_MPIfun(Glob_Nbasis_final)
 ENDIF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -314,9 +316,9 @@ ENDIF
 !========================
 
 IF(Glob_basis_form==0)THEN
-  CALL rij_0_0_MPIfun(Glob_Nbasis_final)
+  CALL rij_0_MPIfun(Glob_Nbasis_final,Glob_rij_power)
 ELSEIF(Glob_basis_form==1)THEN
-  CALL rij_1_0_MPIfun(Glob_Nbasis_final)
+  CALL rij_1_MPIfun(Glob_Nbasis_final,Glob_rij_power)
 ENDIF
 
 

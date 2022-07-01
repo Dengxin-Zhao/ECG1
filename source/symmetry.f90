@@ -2,229 +2,235 @@ MODULE symmetry
 !====================================================
 !this module contains subroutines for symmetry operator
 !====================================================
-  USE globvars
-    
+USE globvars
+USE auxfun
+
 CONTAINS
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!calculate the symmetry factor due to spin and permutation
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 SUBROUTINE symmetry_fun()
-!===========================OK
+!================================================
 !generate the symmetry factor due to spin and permutation parity
+!================================================
 !output:
 !  Glob_symmetry(Glob_Nperm): symmetry factor
-!===========================
+!================================================
 IMPLICIT NONE
-INTEGER::i,j,k,mi,mj
+INTEGER::i,j,ip,mi,mj
 REAL(dp)::temp
 
-DO i=1,Glob_Nperm
-  Glob_symmetry(i)=ZERO
-  DO j=1,Glob_Nspin
-    DO k=1,Glob_Nspin
-      temp=Glob_permut_parity(i)*Glob_spin_parity(j)*Glob_spin_parity(k)
-      DO mi=1,Glob_Nparticle
-        mj=Glob_P(mi,i)
-        temp=temp*delta(Glob_ptype(mi),Glob_ptype(mj))* &
-        & delta(Glob_spin_config(mi,j),Glob_spin_config(mj,k))
-      ENDDO
-      Glob_symmetry(i)=Glob_symmetry(i)+temp
-    ENDDO
-  ENDDO
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+DO ip=1,Glob_Nperm
+
+Glob_symmetry(ip)=0.0_dp
+
+DO i=1,Glob_Nspin
+DO j=1,Glob_Nspin
+    
+temp=Glob_permut_parity(ip)*Glob_spin_parity(i)*Glob_spin_parity(j)
+    
+DO mi=1,Glob_Nparticle
+  mj=Glob_P(mi,ip)
+  temp=temp*delta(Glob_ptype(mi),Glob_ptype(mj))&
+  &*delta(Glob_spin_config(mi,i),Glob_spin_config(mj,j))
 ENDDO
+
+Glob_symmetry(ip)=Glob_symmetry(ip)+temp
+
+ENDDO
+ENDDO
+
+ENDDO
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 RETURN
 END SUBROUTINE symmetry_fun
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!function to write symmetry factor into file 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE write_symmetry_fun()
-!==============================
-!This program write symmetry factors into 
-!symetry.txt file
-!==============================
+!===================================================
+!This program write symmetry factors into symetry.txt
+!===================================================
 IMPLICIT NONE
-INTEGER::ip
-CHARACTER(100)::IRAst
-IRAst="(f10.5,A1,????????I8,A5)"
+INTEGER::i,ip
+CHARACTER(100)::IRAst1,IRAst2
+IRAst1="(f10.5,A1,????????I8,A5)"
+IRAst2="(????????f10.5)"
 
 OPEN(unit=20,file='symmetry.txt')
-WRITE(IRAst(11:18),fmt="(TL1,I8.8)")Glob_Nparticle
+WRITE(IRAst1(11:18),fmt="(TL1,I8.8)")Glob_Nparticle
+WRITE(IRAst2(2:9),fmt="(TL1,I8.8)")Glob_Np
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 DO ip=1,Glob_Nperm
-  IF(dabs(Glob_symmetry(ip))>ZERO)THEN
-    WRITE(20,IRAst)Glob_symmetry(ip),'(',Glob_P(1:Glob_Nparticle,ip),')'
+  IF(dabs(Glob_symmetry(ip))>0.0_dp)THEN
+    WRITE(20,IRAst1)Glob_symmetry(ip),'(',Glob_P(1:Glob_Nparticle,ip),')'
+    WRITE(20,*)'=================================='
+    DO i=1,Glob_Np
+      WRITE(20,IRAst2)Glob_Tp(i,1:Glob_Np,ip)
+    ENDDO
+     WRITE(20,*)'=================================='
   ENDIF
 ENDDO
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 CLOSE(20)
 RETURN
 END SUBROUTINE write_symmetry_fun
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!calculate the permutation
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE permutation()
-!===========================OK
+SUBROUTINE permut_mat_fun()
+!==================================================
 !generate the permutation operator and its parity
+!==================================================
 !output:
-!  Glob_P: all permutations
-!  Glob_Tp: permutations acting on relative coordinate
-!  Glob_permut_parity: parity of each permutation 
-!===========================
+!            Glob_P: all permutations
+!           Glob_Tp: permutations matrix
+!Glob_permut_parity: parity of each permutation 
+!==================================================
 IMPLICIT NONE
-INTEGER::ip,i,j,k,l,pk
-REAL(dp)::iparity
-INTEGER::ipermut(Glob_Nparticle)
+INTEGER::ip,i,j,k,l,pk,ipermut(Glob_Nparticle)
+REAL(dp)::iparity,temp
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 loop:DO ip=1,Glob_Nperm
     
-  CALL permut_fun(ip,Glob_Nparticle,ipermut)
-  CALL permut_parity_fun(ipermut,Glob_Nparticle,iparity)
-  Glob_permut_parity(ip)=iparity
-  Glob_P(:,ip)=ipermut(:)  ! ip_th permutation among Glob_Nparticle particles
+CALL permut_fun(ip,Glob_Nparticle,ipermut)
+CALL permut_parity_fun(ipermut,Glob_Nparticle,iparity)
 
-!permutation Glob_Tp acting on Jaccobi coordinate x
+Glob_P(:,ip)=ipermut(:)        !ip permutation
+Glob_permut_parity(ip)=iparity !ip permutation parity
+
+!permutation matrix
+DO j=1,Glob_Np
   DO i=1,Glob_Np
-    DO j=1,Glob_Np
-      Glob_Tp(i,j,ip)=ZERO
+    temp=0.0_dp
 	  DO k=1,Glob_Nparticle
-        pk=ipermut(k)
-	    Glob_Tp(i,j,ip)=Glob_Tp(i,j,ip)+Glob_U(i,k)*Glob_inv_U(pk,j)
+      pk=ipermut(k)
+	    temp=temp+Glob_U(i,k)*Glob_inv_U(pk,j)
 	  ENDDO
-    ENDDO
+    Glob_Tp(i,j,ip)=temp
   ENDDO
+ENDDO
   
 ENDDO loop
 
-END SUBROUTINE permutation
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+RETURN
+END SUBROUTINE permut_mat_fun
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!generate premutation of N particle
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE permut_fun(k,N,ipermut)
-!============================OK
+!==============================================
 !generate all permutations of N particles
 !(all rearangement of N numbers from 1 to N)
+!==============================================
 !input:
-!  k:the k_th permutation
-!  N:particle number
+!  k: the k_th permutation
+!  N: particle number
 !output:
-!  ipermut:column vector containing the k_th permutation(ipermut(i)->j)
-!============================
+!  ipermut: column vector containing the k_th permutation(ipermut(i)->j)
+!==============================================
 IMPLICIT NONE
-INTEGER::k,N
-INTEGER::ipermut(N)
-INTEGER::i,j,is,io
-INTEGER::iv(N+1)
+INTEGER,INTENT(IN)::k,N
+INTEGER,INTENT(OUT)::ipermut(N)
 
-ipermut=ZERO
+INTEGER::i,j,is,io,iv(N+1)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 DO i=1,N
   iv(i)=i
 ENDDO
+
 io=k-1
 DO i=N-1,1,-1
-  is=io/fac(i)+1
-  io=MOD(io,fac(i))
-  ipermut(N-i)=iv(is)
-  DO j=is,i
-      iv(j)=iv(j+1)
-  ENDDO
-ENDDO
-ipermut(N)=IV(1)
-RETURN
 
+is=io/fac(i)+1
+io=MOD(io,fac(i))
+ipermut(N-i)=iv(is)
+  
+DO j=is,i
+  iv(j)=iv(j+1)
+ENDDO
+
+ENDDO
+
+ipermut(N)=iv(1)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+RETURN
 END SUBROUTINE permut_fun
 	   
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!	  
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!parity of permutation
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	  
 SUBROUTINE permut_parity_fun(ipermut,N,iparity)
-!============================OK
+!=================================================
 !the parity of permutation ia
+!=================================================
 !input:
 !  ipermut:permutation
 !   N:particle number
 !output:
 !  iparity:parity of ipermut permutation
-!============================
+!=================================================
 IMPLICIT NONE
-INTEGER::N
-INTEGER::ipermut(N)
-INTEGER::itemp(N)
-INTEGER::i,j,M,temp
-REAL(dp)::iparity
+INTEGER,INTENT(IN)::N,ipermut(N)
+REAL(dp),INTENT(OUT)::iparity
+
+INTEGER::i,j,M,temp,itemp(N)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 DO i=1,N
   itemp(i)=ipermut(i)
 ENDDO
-!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 M=0
-DO i=1,N
-  DO j=i,N
-    IF(itemp(j)==i .AND. i/=j)THEN
-      temp=itemp(i)
-      itemp(i)=itemp(j)
-      itemp(j)=temp
-      M=M+1
-    ENDIF   
-  ENDDO
+
+DO j=1,N
+DO i=j,N
+    
+IF(itemp(i)==j.AND.i/=j)THEN
+  temp=itemp(j)
+  itemp(j)=itemp(i)
+  itemp(i)=temp
+  M=M+1
+ENDIF   
+  
+ENDDO
 ENDDO  
-iparity=(-ONE)**M 
+
+iparity=(-1.0_dp)**M 
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 RETURN
 END SUBROUTINE permut_parity_fun
-    
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-FUNCTION fac(k)
-!======================OK
-!calculate the factorial of k:  k!
-!======================
-IMPLICIT NONE
-INTEGER::k,fac
-INTEGER::i
-fac=1
-DO i=1,k
-    fac=fac*i
-ENDDO
-RETURN
-END FUNCTION fac
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-FUNCTION dfac(k)
-!====================OK
-!calculate the double-factorial of k:  k!!
-!====================
-IMPLICIT NONE
-INTEGER::k,dfac
-INTEGER::i
-i=k
-dfac=k
-DO WHILE(i>2)
-i=i-2
-dfac=dfac*i
-ENDDO
-RETURN
-END FUNCTION dfac
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-   
-FUNCTION delta(i,j)
-!===============================OK
-!delta function
-!===============================
-IMPLICIT NONE
-INTEGER::i,j
-REAL(dp)::delta
-delta=ZERO
-IF(i==j)THEN 
-delta=ONE
-ENDIF
-RETURN
-END FUNCTION delta   
-    
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 END MODULE symmetry
