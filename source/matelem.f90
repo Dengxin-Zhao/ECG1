@@ -9,12 +9,11 @@ USE auxfun
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !define private matrix and variables used in module matelem.f90
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!=================================
+!================================================
 !private variable used when calculating matrix element(marked by p_ )
 !these variables require allocations once at the begining
 !of the whole program. 
-!be aware of the order of calculating each variable.
-!=================================
+!================================================
 IMPLICIT NONE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !=============================
