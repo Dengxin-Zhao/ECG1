@@ -10,7 +10,7 @@
 #PBS -V 
 #PBS -S /bin/bash 
 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-EXEC=./ECG4-1/bin/main          
+EXEC=./ECG1-1/bin/main          
 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 # setup hostfile 
   echo "host: " 
