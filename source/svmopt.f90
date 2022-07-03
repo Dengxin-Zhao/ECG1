@@ -189,6 +189,7 @@ bk_cal(1)=nb
 bk_cal(2)=nb
 
 CALL one_diag_init_MPIfun(Nb_start,nb)
+!CALL Eval_MPIfun(Nb_start,1,bk_cal,Eval,Ci(1:Nb_start),ERR,1)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -227,6 +228,7 @@ CALL pvars_gvmopt(1,0)
 CALL pvars_gvmopt(Nb_start,1)
 bk_cal(1)=1
 bk_cal(2)=Nb_start
+CALL Eval_MPIfun(Nb_start,Nb_start,bk_cal,Eval,Ci(1:Nb_start),ERR,1)
 CALL Lk_gvm_MPIfun(Nb_start,Nb_start,bk_cal,gvm_IT2,Eval,Ci(1:Nb_start))
 CALL pvars_gvmopt(Nb_start,0)
 
@@ -251,6 +253,7 @@ CALL pvars_MPImat(nb,1)
 CALL pvars_eigen(nb,1)
 CALL one_diag_init_MPIfun(nb,nb)
 CALL basis_generate_MPIfun(nb,nb,Eval)
+!CALL Eval_MPIfun(nb,1,bk_cal,Eval,Ci(1:nb),ERR,1)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -500,7 +503,7 @@ IF(ERR/=0)PAUSE'eigen solution error before all_gvm_svm'
 IF(myid==Glob_root)THEN 
   OPEN(unit=2,file='log.txt',position='append')
   WRITE(2,*)'=================================================' 
-  WRITE(2,*)'gvm+svm optimization start:'
+  WRITE(2,*)'gvm+svm optimization starts:'
   WRITE(2,*)'present total basis number:',Nbasis
   WRITE(2,*)'================================================='
   WRITE(2,*)'start energy:',Eval
@@ -577,9 +580,9 @@ CALL time_cal_fun(time_st)
 WRITE(2,'(A14,2I10,I14,f28.16)')time_st,count,nr,nb,Eval
 write_index=write_index+1
 IF(write_index<=10)THEN
-  CALL write_parafile(1) !write in parafile1.txt 
+  CALL write_parafile(1)
 ELSE
-  CALL write_parafile(2) !write in parafile2.txt 
+  CALL write_parafile(2)
   IF(write_index==20)THEN
       write_index=0
   ENDIF
@@ -592,7 +595,7 @@ ENDDO optimize_loop
 
 IF(myid==Glob_root)THEN 
   WRITE(2,*)'=================================================' 
-  WRITE(2,*)'stochastic optimization finished'
+  WRITE(2,*)'gvm+svm optimization finished'
   WRITE(2,*)'================================================='
   WRITE(2,*)
   CLOSE(2)
@@ -648,7 +651,7 @@ IF(ERR/=0)PAUSE'eigen solution error before all_svm'
 IF(myid==Glob_root)THEN 
   OPEN(unit=2,file='log.txt',position='append')
   WRITE(2,*)'=================================================' 
-  WRITE(2,*)'stochastic optimization start:'
+  WRITE(2,*)'svm optimization starts:'
   WRITE(2,*)'present total basis number:',Nbasis
   WRITE(2,*)'================================================='
   WRITE(2,*)'start energy:',Eval
@@ -716,7 +719,7 @@ ENDDO optimize_loop
 
 IF(myid==Glob_root)THEN
   WRITE(2,*)'=================================================' 
-  WRITE(2,*)'stochastic optimization finished'
+  WRITE(2,*)'svm optimization finished'
   WRITE(2,*)'================================================='
   WRITE(2,*)
   CLOSE(2)
