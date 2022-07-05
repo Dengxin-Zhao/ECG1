@@ -1,0 +1,46 @@
+==================system==========================
+particle_system:  H2
+system_coordinate:  Jacobi
+opt_angular_momentum: 0 0
+opt_energy_level:  1
+=================attributes=======================
+particles: 4
+masses: 1836.15267261d0 1836.15267261d0 1.d0 1.d0
+charges: 1.d0 1.d0 -1.d0 -1.d0  
+particle_type: 1 1 2 2
+spin_config_num: 4
+1.d0  ( 1 2 1 2 )
+-1.d0 ( 1 2 2 1 )
+-1.d0 ( 2 1 1 2 )
+1.d0  ( 2 1 2 1 )
+==================basis===========================
+start_basis_size: 100
+final_basis_size: 100
+increase_per_time:  0
+init_nonlinear_para:  0
+overlap_threshold: 0.99d0
+==================opt_para========================
+task_on_off:  on
+opt_strategy:  1
+rounds_limit: 100000
+===============================
+gvm_batch_num:  1
+gvm_opt_ITmax:  10
+gvm_opt_rounds:  1
+===============================
+svm_opt_IT1: 10
+svm_opt_IT2: 10
+svm_opt_rounds: 1
+Lk_mode_num: 1  
+5  <12~34>
+0.15d0  0.15d0  0   0    0
+============structure_info=======================
+task_on_off: off
+===============================
+correlation_Gij:  <12~13>
+meshgrid: 0.1 : 0.001 : 5.d0
+==============================
+particle_distance: <12~13>
+power_of_rij:  1.d0
+=================================================
+
