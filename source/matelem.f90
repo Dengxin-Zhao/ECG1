@@ -63,8 +63,7 @@ IMPLICIT NONE
 
 ALLOCATE(p_Lk(Glob_Np,Glob_Np),p_Ll(Glob_Np,Glob_Np))
 ALLOCATE(p_Ak(Glob_Np,Glob_Np),p_Al(Glob_Np,Glob_Np))
-ALLOCATE(p_tAl(Glob_Np,Glob_Np),p_tAkl(Glob_Np,Glob_Np))
-ALLOCATE(p_inv_tAkl(Glob_Np,Glob_Np))
+ALLOCATE(p_tAl(Glob_Np,Glob_Np),p_tAkl(Glob_Np,Glob_Np),p_inv_tAkl(Glob_Np,Glob_Np))
 ALLOCATE(p_dSkl_dLk(Glob_NLk),p_dHkl_dLk(Glob_NLk))
 ALLOCATE(p_dTkl_dLk(Glob_NLk),p_dVkl_coulomb_dLk(Glob_NLK))
 
@@ -152,11 +151,11 @@ CALL det_inv_fun(Glob_Np,p_tAkl,p_det_tAkl,p_inv_tAkl)
 !Skl,Tkl,Vkl
 CALL Skl_0_fun()
 CALL Tkl_0_fun()
-CALL Vkl_coulomb_0_fun()
+CALL Vkl_Coulomb_0_fun()
 
 !Skl,Hkl
 Skl=Skl+Glob_symmetry(ip)*p_Skl
-Hkl=Hkl+Glob_symmetry(ip)*(p_Tkl+p_Vkl_coulomb)
+Hkl=Hkl+Glob_symmetry(ip)*(p_Tkl+p_Vkl_Coulomb)
 
 ENDIF
 ENDDO perm_loop
@@ -302,15 +301,15 @@ CALL det_inv_fun(Glob_Np,p_tAkl,p_det_tAkl,p_inv_tAkl)
 !Skl,Tkl,Vkl
 CALL Skl_0_fun()
 CALL Tkl_0_fun()
-CALL Vkl_coulomb_0_fun()
+CALL Vkl_Coulomb_0_fun()
 
 !dSkl_dLk,dTkl_dLk,dVkl_Coulomb_dLk
 CALL dSkl_dLk_0_fun(ip,bk,bl)
 CALL dTkl_dLk_0_fun(ip,bk,bl)
-CALL dVkl_coulomb_dLk_0_fun(ip,bk,bl)
+CALL dVkl_Coulomb_dLk_0_fun(ip,bk,bl)
     
 dSkl_dLk(:)=dSkl_dLk(:)+Glob_symmetry(ip)*p_dSkl_dLk(:)
-dHkl_dLk(:)=dHkl_dLk(:)+Glob_symmetry(ip)*(p_dTkl_dLk(:)+p_dVkl_coulomb_dLk(:))
+dHkl_dLk(:)=dHkl_dLk(:)+Glob_symmetry(ip)*(p_dTkl_dLk(:)+p_dVkl_Coulomb_dLk(:))
   
 ENDIF
 ENDDO perm_loop
@@ -395,6 +394,8 @@ REAL(dp)::det_Lk,det_Ll,temp
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+IF(p_det_tAkl==0.0_dp)PAUSE'det_tAkl==0'
+
 !det_Lk,det_Ll
 det_Lk=1.0_dp
 det_Ll=1.0_dp
@@ -402,8 +403,6 @@ DO i=1,Glob_Np
   det_Lk=det_Lk*p_Lk(i,i)
   det_Ll=det_Ll*p_Ll(i,i)
 ENDDO
-
-IF(p_det_tAkl==0.0_dp)PAUSE'det_tAkl==0'
 
 !Skl
 temp=dabs(det_Lk*det_Ll)/p_det_tAkl
@@ -433,8 +432,8 @@ REAL(dp)::temp,inv_Lk(Glob_Np,Glob_Np),inv_tAkl_ttAkl(Glob_Np,Glob_Np)
   
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !===========================
-!bk==bl ->inv_tAkl_ttAkl=inv_tAkl+inv_ttAkl
-!bk!=bl ->inv_tAkl_ttAkl=inv_tAkl
+!bk!=bl: inv_tAkl_ttAkl=inv_tAkl
+!bk==bl: inv_tAkl_ttAkl=inv_tAkl+inv_ttAkl
 !===========================
   
 CALL inv_L_lower(Glob_Np,p_Lk,inv_Lk)
@@ -553,8 +552,8 @@ REAL(dp)::temp,Atemp(Glob_Np,Glob_Np),Btemp(Glob_Np,Glob_Np),F_G(Glob_Np,Glob_Np
   
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !===============================
-!F_G: bk==bl -> F_G=F+G
-!     bk!=bl -> F_G=F
+!bk!=bl: F_G=F
+!bk==bl: F_G=F+G
 !===============================
   
 !inv_tAkl*tAl*Lambda
@@ -687,7 +686,7 @@ Vkl=Vkl+Glob_charge(ii)*Glob_charge(jj)/dsqrt(temp)
 ENDDO loop2
 ENDDO loop1
 
-p_Vkl_coulomb=(2.0_dp/SQRTPI)*p_Skl*Vkl
+p_Vkl_Coulomb=(2.0_dp/SQRTPI)*p_Skl*Vkl
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -696,7 +695,7 @@ END SUBROUTINE Vkl_Coulomb_0_fun
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE dVkl_coulomb_dLk_0_fun(ip,bk,bl)
+SUBROUTINE dVkl_Coulomb_dLk_0_fun(ip,bk,bl)
 !===================================================
 !calculate the gradient of Coulomb potential energy
 !with respect to Lk
@@ -776,22 +775,24 @@ DO j=1,Glob_Np
     ENDDO
 
     dVkl_dLk(index)=dVkl_dLk(index)+Glob_charge(ii)*Glob_charge(jj)&
-    &*(p_tr_invtAkl_Jij(ii,jj)**(-1.5_dp))*temp
+    &*temp*p_tr_invtAkl_Jij(ii,jj)**(-1.5_dp)
   ENDDO
 ENDDO
 
 ENDDO loop2
 ENDDO loop1
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 DO i=1,GLob_NLk
-  p_dVkl_coulomb_dLk(i)=p_Vkl_coulomb*p_dSkl_dLk(i)/p_Skl+&
-  &(2.0_dp/SQRTPI)*p_Skl*dVkl_dLk(i)
+  p_dVkl_Coulomb_dLk(i)=p_Vkl_Coulomb*p_dSkl_dLk(i)/p_Skl&
+  &+(2.0_dp/SQRTPI)*p_Skl*dVkl_dLk(i)
 ENDDO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 RETURN
-END SUBROUTINE dVkl_coulomb_dLk_0_fun
+END SUBROUTINE dVkl_Coulomb_dLk_0_fun
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !correlation function Gij for L=0,M=0
