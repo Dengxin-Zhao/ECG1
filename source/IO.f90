@@ -235,6 +235,7 @@ ENDDO
 READ(1,*)preChar(1),k
 DO i=1,k
   READ(1,*)
+  READ(1,*)
 ENDDO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -493,7 +494,7 @@ WRITE(2,*)'==============================='
 
 WRITE(2,*)'correlation_Gij:'
 
-WRITE(2,'(A16,A2,A100)')'correlation_Gij:','  ',p_gij_mode_Char
+WRITE(2,'(A17,A2,A100)')'correlation_Gij:','  ',p_gij_mode_Char
 
 WRITE(2,'(A10,f10.5,A5,f10.5,A5,f10.5)')'meshgrid:',Glob_gij_R(1)&
 &,':',Glob_gij_R(2),':',Glob_gij_R(3)
@@ -504,7 +505,7 @@ WRITE(2,*)'==============================='
 
 WRITE(2,*)'particle_distance:'
 
-WRITE(2,'(A18,A2,A100)')'particle_distance:','  ',p_rij_mode_Char
+WRITE(2,'(A19,A2,A100)')'particle_distance:','  ',p_rij_mode_Char
 
 WRITE(2,*)'power_of_rij:',Glob_rij_power
 

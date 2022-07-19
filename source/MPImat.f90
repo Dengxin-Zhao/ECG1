@@ -372,8 +372,8 @@ SUBROUTINE gij_0_MPIfun(Nbasis)
 IMPLICIT NONE
 INTEGER,INTENT(IN)::Nbasis
 
-INTEGER::i,j,k,L,index,myid,ERR,nodenum
-INTEGER::ni,ii,jj,bk,bl,Nproc,bk_cal(2)
+INTEGER::i,j,k,L,index,myid,ERR,count
+INTEGER::ii,jj,bk,bl,Nproc,bk_cal(2)
 INTEGER,ALLOCATABLE::bl_cal(:)
 
 REAL(dp)::Eval,Ci(Nbasis)
@@ -416,12 +416,9 @@ ENDIF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-nodenum=ceiling((Glob_gij_R(3)-Glob_gij_R(1))/Glob_gij_R(2))
-
-node_loop:DO ni=1,nodenum
-
-R=Glob_gij_R(1)+Glob_gij_R(2)*dble(ni)
-
+count=0
+node_loop:DO R=Glob_gij_R(1),Glob_gij_R(3),Glob_gij_R(2)
+count=count+1
 
 index=0
 ii_loop:DO ii=1,Glob_Nparticle
@@ -466,7 +463,7 @@ IF(myid==Glob_root)THEN
 CALL time_cal_fun(time_st)
   
 !write present status in log file
-WRITE(2,'(A14,I10,f26.15,A11)')time_st,ni,R,'OK'
+WRITE(2,'(A14,I10,f26.15,A11)')time_st,count,R,'OK'
 
 WRITE(6,Rst)R,gij(1:index)
 
@@ -514,8 +511,8 @@ SUBROUTINE gij_1_MPIfun(Nbasis)
 IMPLICIT NONE
 INTEGER,INTENT(IN)::Nbasis
 
-INTEGER::i,j,k,L,index,myid,ERR,count,nodenum1,nodenum2
-INTEGER::ni,nj,ii,jj,bk,bl,Nproc,bk_cal(2)
+INTEGER::i,j,k,L,index,myid,ERR,count
+INTEGER::ii,jj,bk,bl,Nproc,bk_cal(2)
 INTEGER,ALLOCATABLE::bl_cal(:)
   
 REAL(dp)::Eval,Ci(Nbasis)
@@ -558,16 +555,10 @@ ENDIF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-nodenum1=ceiling((Glob_gij_R(3)-Glob_gij_R(1))/Glob_gij_R(2))
-nodenum2=ceiling(Glob_gij_R(3)/Glob_gij_R(2))
-
 count=0
-node_loop1:DO ni=1,nodenum1
-node_loop2:DO nj=1,nodenum2
-
+node_loop1:DO Rxy=Glob_gij_R(1),Glob_gij_R(3),Glob_gij_R(2)
+node_loop2:DO Rz=-Glob_gij_R(3)/2.0_dp,Glob_gij_R(3)/2.0_dp,Glob_gij_R(2)
 count=count+1
-Rxy=Glob_gij_R(1)+Glob_gij_R(2)*dble(ni)
-Rz=-Glob_gij_R(3)/2.d0+Glob_gij_R(2)*dble(nj)
 
 index=0
 ii_loop:DO ii=1,Glob_Nparticle
@@ -698,6 +689,8 @@ IF(myid==Glob_root)THEN
   WRITE(2,*)'present total basis number:',Nbasis
   WRITE(2,*)'present energy:',Eval
   WRITE(2,*)'================================================='
+  WRITE(2,*)'power of rij:',v
+  WRITE(2,*)'================================================='
   WRITE(2,'(A14,3A10,A11)')'time','count','pk','pl','<rij>'
 ENDIF
 
@@ -822,6 +815,8 @@ IF(myid==Glob_root)THEN
   WRITE(2,*)'calculation of <rij> starts:'
   WRITE(2,*)'present total basis number:',Nbasis
   WRITE(2,*)'present energy:',Eval
+  WRITE(2,*)'================================================='
+  WRITE(2,*)'power of rij:',v
   WRITE(2,*)'================================================='
   WRITE(2,'(A14,3A10,A11)')'time','count','pk','pl','<rij>'
 ENDIF
