@@ -71,16 +71,16 @@ ELSEIF(preChar(2)(1:12)=='Heavy-center')THEN
 ENDIF
 
 !total angular momentum of the system
-READ(1,*)preChar(1),Glob_angular_momentum(1:2)
+READ(1,*)preChar(1),Glob_LM(1:2)
 
 !switch basis form used in the program
 !=========================
 !Glob_basis_form=0: L=0,M=0 
 !Glob_basis_form=1: L=1,M=0
 !=========================
-IF((Glob_angular_momentum(1)==0).AND.(Glob_angular_momentum(2)==0))THEN
+IF((Glob_LM(1)==0).AND.(Glob_LM(2)==0))THEN
   Glob_basis_form=0
-ELSEIF((Glob_angular_momentum(1)==1).AND.(Glob_angular_momentum(2)==0))THEN
+ELSEIF((Glob_LM(1)==1).AND.(Glob_LM(2)==0))THEN
    Glob_basis_form=1
 ENDIF
 
@@ -121,7 +121,6 @@ READ(1,*)preChar(1),Glob_ptype(1:Glob_Nparticle)
 ALLOCATE(Glob_U(Glob_Nparticle,Glob_Nparticle))
 ALLOCATE(Glob_inv_U(Glob_Nparticle,Glob_Nparticle))
 ALLOCATE(Glob_Lambda(Glob_Nparticle,Glob_Nparticle))
-ALLOCATE(Glob_wi(Glob_Np,Glob_Nparticle))
 ALLOCATE(Glob_wij(Glob_Np,Glob_Nparticle,Glob_Nparticle))
 ALLOCATE(Glob_Jij(Glob_Np,Glob_Np,Glob_Nparticle,Glob_Nparticle))
 
@@ -129,7 +128,7 @@ ALLOCATE(Glob_Jij(Glob_Np,Glob_Np,Glob_Nparticle,Glob_Nparticle))
 CALL U_Lambda_fun()
 
 !form wi and wij matrix
-CALL wi_wij_fun()            
+CALL wij_fun()            
 
 !Jij matrix
 CALL Jij_fun()
@@ -392,7 +391,7 @@ ELSEIF(Glob_coordinate_case==2)THEN
   WRITE(2,*)'system_coordinate:',' ','Heavy-center'
 ENDIF
 
-WRITE(2,*)'opt_angular_momentum:',GLob_angular_momentum(1:2)
+WRITE(2,*)'opt_angular_momentum:',GLob_LM(1:2)
 
 WRITE(2,*)'opt_energy_level:',Glob_energy_level
 
@@ -427,7 +426,7 @@ ENDDO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-WRITE(2,*)'====================basis========================='
+WRITE(2,*)'======================basis========================='
 
 WRITE(2,*)'start_basis_size:',Glob_Nbasis_start
 
@@ -642,7 +641,7 @@ END SUBROUTINE U_Lambda_fun
 !calculate wi and wij matrix
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE wi_wij_fun()
+SUBROUTINE wij_fun()
 !=============================================
 !calculate the matrix used to from ri-x_(N+1)
 !and reletive coordinate ri-rj
@@ -650,24 +649,24 @@ SUBROUTINE wi_wij_fun()
 !input:
 !  Glob_U,Glob_inv_U
 !output:
-!  Glob_wi:  ri-x_(N+1)=wi*x
-!  Glob_wij: ri-rj=wij*x
+!  wi:  ri-x_(N+1)=wi*x
+! wij: ri-rj=wij*x
 !=============================================
 IMPLICIT NONE
 INTEGER::i,j,k
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!Glob_wi
-Glob_wi(:,:)=0.0_dp
+Glob_wij(:,:,:)=0.0_dp
+
+!wi
 DO i=1,Glob_Nparticle
   DO k=1,Glob_Np
-    Glob_wi(k,i)=Glob_inv_U(i,k)
+    Glob_wij(k,i,i)=Glob_inv_U(i,k)
   ENDDO
 ENDDO
 
-!Glob_wij
-Glob_wij(:,:,:)=0.0_dp
+!wij
 DO i=1,Glob_Nparticle-1
   DO j=i+1,Glob_Nparticle
     DO k=1,Glob_Np
@@ -679,7 +678,7 @@ ENDDO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 RETURN
-END SUBROUTINE wi_wij_fun
+END SUBROUTINE wij_fun
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !calculate Jji matrix
@@ -687,13 +686,13 @@ END SUBROUTINE wi_wij_fun
 
 SUBROUTINE Jij_fun()
 !==========================================
-!calculate the Jii and Jij matrix:
+!calculate the Jij matrix:
 ! Jii=wi*wi'; Jij=wij*wij'
 !==========================================
 !input:
-!  Glob_wi,Glob_wij
+!  Glob_wij
 !output:
-!  Glob_Jii,Glob_Jij
+!  Glob_Jij
 !==========================================
 IMPLICIT NONE
 INTEGER::ii,jj,i,j
@@ -707,7 +706,7 @@ DO ii=1,Glob_Nparticle
     
   DO i=1,Glob_Np
     DO j=1,Glob_Np
-    Glob_Jij(i,j,ii,ii)=Glob_wi(i,ii)*Glob_wi(j,ii)
+    Glob_Jij(i,j,ii,ii)=Glob_wij(i,ii,ii)*Glob_wij(j,ii,ii)
     ENDDO
   ENDDO
   
@@ -737,12 +736,13 @@ END SUBROUTINE Jij_fun
 
 SUBROUTINE Lk_mode_read()
 !===============================================
-!read the svm mode and corresbonding mode parameters of Lk with format:
-!<ij-kl~mn>:
-!ij-kl represents the the matrix element at ij and kl position
-!kl~mn represents the matrix element at kl and mn position as 
-!well as the position number between them.(the read format only
-!suits where particle number less than 10)
+!read the svm mode and corresbonding mode parameters
+!of Lk with format <ij-kl~mn>:
+!ij-kl represents the the matrix element at (i,j) and
+!(k,l) position. kl~mn represents the matrix element 
+!at (k,l) and (m,n) position as well as the position 
+!between them. (the read format only suits where particle 
+!number less than 10)
 !===============================================
 !output:
 !  Glob_Lk_mode and Glob_Lk_mode_para
@@ -1095,6 +1095,9 @@ READ(3,*)preChar(1),preChar(2)
 READ(3,*)preChar(1),preChar(2)
 
 READ(3,*)preChar(1),Glob_Nbasis_reach
+IF(Glob_Nbasis_reach/=Glob_Nbasis_start)THEN
+  PAUSE'basis number in parafile1.txt differs from that in input.txt'
+ENDIF
 
 READ(3,*)preChar(1),Glob_opt_reach
 
@@ -1103,10 +1106,6 @@ READ(3,*)preChar(1),Glob_E_reach
 READ(3,*)preChar(1)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-IF(Glob_Nbasis_reach/=Glob_Nbasis_start)THEN
-  PAUSE'basis number in input is different from that in parafile1 '
-ENDIF
 
 IF(Glob_basis_form==0)THEN
 
@@ -1151,6 +1150,9 @@ READ(4,*)preChar(1),preChar(2)
 READ(4,*)preChar(1),preChar(2)
 
 READ(4,*)preChar(1),Glob_Nbasis_reach
+IF(Glob_Nbasis_reach/=Glob_Nbasis_start)THEN
+  PAUSE'basis number in parafile2.txt differs from that in input.txt'
+ENDIF
 
 READ(4,*)preChar(1),Glob_opt_reach
 
@@ -1159,10 +1161,6 @@ READ(4,*)preChar(1),Glob_E_reach
 READ(4,*)prechar(1)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-IF(Glob_Nbasis_reach/=Glob_Nbasis_start)THEN
-  PAUSE'basis number in input is different from that in parafile2'
-ENDIF
 
 IF(Glob_basis_form==0)THEN
 
@@ -1183,67 +1181,6 @@ ENDIF
 CLOSE(4)
 RETURN
 END SUBROUTINE read_parafile2
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!read parameters from Amatrix.txt
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-SUBROUTINE read_Amatrix()
-!================================================
-!read A matrix from other files need change when 
-!the format of other files changes
-!================================================
-IMPLICIT NONE
-INTEGER::i,j,k,nb,index1,index2,line
-REAL(dp)::temp0(Glob_Nparticle),temp(Glob_Np*Glob_Np),vechA(Glob_NLk)
-
-CHARACTER(100)::preChar(10)
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-OPEN(unit=5,file='Amatrix.txt')
-
-READ(5,*)preChar(1)
-
-READ(5,*)preChar(1),preChar(2)
-
-READ(5,*)preChar(1),Glob_Nbasis_reach
-
-READ(5,*)preChar(1),Glob_opt_reach
-
-READ(5,*)preChar(1),Glob_E_reach
-
-READ(5,*)preChar(1)
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-DO nb=1,Glob_Nbasis_reach
-
-  !read Amatrix and decompose it
-  READ(5,*)temp0(1:Glob_Nparticle)
-  READ(5,*)temp(1:Glob_Np*Glob_Np)
-  
-  index1=0
-  index2=0
-  DO i=1,Glob_Np
-    DO j=1,Glob_Np
-      index1=index1+1
-      IF(j>=i)THEN
-        index2=index2+1
-        vechA(index2)=temp(index1)*0.5_dp
-      ENDIF
-    ENDDO
-  ENDDO
-  
-  CALL Ckolesky_decompose(Glob_Np,vechA(:),Glob_Lk(:,nb))
-  
-ENDDO
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-CLOSE(5)
-RETURN
-END SUBROUTINE read_Amatrix
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

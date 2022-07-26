@@ -223,13 +223,13 @@ IF(ERR/=0)PAUSE'eigen solution error before gvm_opt'
 
 IF(myid==Glob_root)THEN 
   OPEN(unit=2,file='log.txt',position='append')
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
   WRITE(2,*)'gvm optimization with BFGs start:'
   WRITE(2,*)'present total basis number:',Nbasis
   WRITE(2,*)'batch basis number:',Nbs
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,*)'start energy:',Eval
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,'(A14,2A10,A14,A11)')'time','count','round','batch_num','energy'
 ENDIF
 
@@ -299,9 +299,9 @@ ENDDO optimize_loop
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 IF(myid==Glob_root)THEN
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
   WRITE(2,*)'gvm optimization with BFGs finished'
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,*)
   CLOSE(2)
 ENDIF
@@ -975,7 +975,7 @@ CASE(1)
 OPEN(unit=3,file='parafile1.txt')
 WRITE(3,*)'========================================================'
 WRITE(3,*)'particle_system:  ',GLob_particle_system
-WRITE(3,*)'opt_angular_momentum:',GLob_angular_momentum(1:2)
+WRITE(3,*)'opt_angular_momentum:',GLob_LM(1:2)
 WRITE(3,*)'opt_energy_level:',Glob_energy_level
 WRITE(3,*)'present_basis_num:',Glob_Nbasis_reach
 WRITE(3,*)'opt_basis_reached:',Glob_opt_reach
@@ -1005,7 +1005,7 @@ CASE(2)
 OPEN(unit=4,file='parafile2.txt')
 WRITE(4,*)'========================================================'
 WRITE(4,*)'particle_system:  ',GLob_particle_system
-WRITE(4,*)'opt_angular_momentum:',GLob_angular_momentum(1:2)
+WRITE(4,*)'opt_angular_momentum:',GLob_LM(1:2)
 WRITE(4,*)'opt_energy_level:',Glob_energy_level
 WRITE(4,*)'present_basis_num:',Glob_Nbasis_reach
 WRITE(4,*)'opt_basis_reached:',Glob_opt_reach

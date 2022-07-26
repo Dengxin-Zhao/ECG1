@@ -1,8 +1,7 @@
 MODULE svmopt
-!=================================
-!this module contains subroutines for 
-!stochastic optimization 
-!=================================
+!==============================================
+!this module contains subroutines for stochastic optimization 
+!==============================================
 USE MPI
 USE globvars
 USE auxfun
@@ -26,7 +25,9 @@ INTEGER,PRIVATE::mkseed=-50031
 !==========================
 INTEGER,PRIVATE,PARAMETER::generate_limit=10
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 CONTAINS    
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !function to increase the basis
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -154,20 +155,20 @@ CALL pvars_MPImat(Nb_start,0)
 IF(myid==Glob_root)THEN 
   IF(Nb_pre==0)THEN
     OPEN(unit=2,file='log.txt',position='append')
-    WRITE(2,*)'=================================================' 
+    WRITE(2,*)'==================================================' 
     WRITE(2,*)'initalize basis to:',Glob_Nbasis_start
-    WRITE(2,*)'================================================='
+    WRITE(2,*)'=================================================='
   ELSE
     OPEN(unit=2,file='log.txt',position='append')
-    WRITE(2,*)'=================================================' 
+    WRITE(2,*)'==================================================' 
     WRITE(2,'(A20,I8,A6,I8)')'increase basis from',Nb_pre,'to',Nb_after
-    WRITE(2,*)'================================================='
+    WRITE(2,*)'=================================================='
   ENDIF
 ENDIF
 
 IF(myid==Glob_root)THEN 
   WRITE(2,*)'start energy:',Eval
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,'(A14,A10,A14,A11)')'time','count','basis_num','energy'
 ENDIF
 
@@ -297,7 +298,7 @@ ENDIF
 !optimzize all generated basis ITmax2 times
 IF(gvm_IT2/=0)THEN
   IF(myid==Glob_root)THEN
-    WRITE(2,*)'================================================='
+    WRITE(2,*)'=================================================='
     WRITE(2,*)'start optimizing all new basis with BFGs, iterations:',gvm_IT2
   ENDIF
   
@@ -319,13 +320,13 @@ Glob_E_reach=Eval
 
 IF(myid==Glob_root)THEN 
 IF(Nb_pre==0)THEN
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,*)'basis initialization finished, basis reached:',Nb_after
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
 ELSE
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
   WRITE(2,*)'basis increment finished, basis reached:',Nb_after
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
 ENDIF
   WRITE(2,*)
 ENDIF
@@ -502,12 +503,12 @@ IF(ERR/=0)PAUSE'eigen solution error before all_gvm_svm'
 
 IF(myid==Glob_root)THEN 
   OPEN(unit=2,file='log.txt',position='append')
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
   WRITE(2,*)'gvm+svm optimization starts:'
   WRITE(2,*)'present total basis number:',Nbasis
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,*)'start energy:',Eval
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,'(A14,2A10,A14,A11)')'time','count','round','basis','energy'
 ENDIF
 
@@ -594,9 +595,9 @@ ENDDO batch_loop
 ENDDO optimize_loop
 
 IF(myid==Glob_root)THEN 
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
   WRITE(2,*)'gvm+svm optimization finished'
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,*)
   CLOSE(2)
 ENDIF
@@ -650,12 +651,12 @@ IF(ERR/=0)PAUSE'eigen solution error before all_svm'
 
 IF(myid==Glob_root)THEN 
   OPEN(unit=2,file='log.txt',position='append')
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
   WRITE(2,*)'svm optimization starts:'
   WRITE(2,*)'present total basis number:',Nbasis
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,*)'start energy:',Eval
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,'(A14,2A10,A14,A11)')'time','count','round','basis','energy'
 ENDIF
 
@@ -718,9 +719,9 @@ ENDDO basis_loop
 ENDDO optimize_loop
 
 IF(myid==Glob_root)THEN
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
   WRITE(2,*)'svm optimization finished'
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,*)
   CLOSE(2)
 ENDIF

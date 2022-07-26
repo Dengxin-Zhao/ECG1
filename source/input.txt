@@ -1,5 +1,5 @@
 ==================system===========================
-particle_system:  Li+_Ps_2S_2400
+particle_system:  Li+_Ps_
 system_coordinate:  Jacobi
 opt_angular_momentum: 0 0
 opt_energy_level:  1
@@ -12,13 +12,13 @@ spin_config_num: 2
 1.0  ( 1 1 2 1 1 )
 -1.0 ( 1 2 1 1 1 )
 ==================basis==========================
-start_basis_size: 3000
-final_basis_size: 3000
+start_basis_size: 100
+final_basis_size: 100
 increase_per_time:  0
-init_nonlinear_para:  1
+init_nonlinear_para:  0
 overlap_threshold: 0.99d0
 ==================opt_para========================
-task_on_off: off
+task_on_off: on
 opt_strategy:  3
 rounds_limit: 100000
 ===============================
@@ -33,7 +33,7 @@ Lk_mode_num: 1
 5  <12~45>
 0.15d0  0.15d0  0   0    0
 ============structure_info=======================
-task_on_off: on
+task_on_off: off
 ===============================
 correlation_Gij:  <12>
 meshgrid: 0.0 : 0.01 : 0.01d0

@@ -375,11 +375,8 @@ INTEGER,INTENT(IN)::Nbasis
 INTEGER::i,j,k,L,index,myid,ERR,count
 INTEGER::ii,jj,bk,bl,Nproc,bk_cal(2)
 INTEGER,ALLOCATABLE::bl_cal(:)
-
-REAL(dp)::Eval,Ci(Nbasis)
-REAL(dp)::R,temp
+REAL(dp)::R,temp,Eval,Ci(Nbasis)
 REAL(dp)::gij(GLob_Nparticle*(Glob_Nparticle+1)/2)
-
 CHARACTER(14)::time_st
 CHARACTER(100)::Rst
 Rst="(????????f26.15)"
@@ -389,32 +386,28 @@ WRITE(Rst(2:9),fmt="(TL1,I8.8)")1+GLob_Nparticle*(Glob_Nparticle+1)/2
 
 CALL pvars_MPImat(Nbasis,1)
 CALL MPI_COMM_RANK(MPI_COMM_WORLD,myid,Glob_MPIerr)
-
 Nproc=p_Nproc(myid+1)
 ALLOCATE(bl_cal(p_Nmax))
 bl_cal(:)=p_bl_cal(:,myid+1)
-
 CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!calculate the eigen value and eigen vector
 bk_cal(1)=1
 bk_cal(2)=Nbasis
 CALL Eval_MPIfun(Nbasis,Nbasis,bk_cal,Eval,Ci,ERR,1)
-
 IF(myid==Glob_root)THEN 
   OPEN(unit=2,file='log.txt',position='append')
   OPEN(unit=6,file='gij.txt')
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
   WRITE(2,*)'calculation of correaltion function starts:'
   WRITE(2,*)'present total basis number:',Nbasis
   WRITE(2,*)'present energy:',Eval
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,'(A14,2A10,A28)')'time','count','R','status'
 ENDIF
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 count=0
 node_loop:DO R=Glob_gij_R(1),Glob_gij_R(3),Glob_gij_R(2)
@@ -427,7 +420,7 @@ index=index+1
 gij(index)=0.0_dp
 IF(Glob_gij_onoff(index)/=0)THEN
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 bk_loop:DO bk=1,Nbasis
 
@@ -445,52 +438,36 @@ ENDIF
 
 ENDDO bk_loop
 
-!sum all partial density and reduce to Glob_root
 temp=gij(index)
-CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
 CALL MPI_REDUCE(temp,gij(index),1,MPI_DOUBLE_PRECISION,MPI_SUM,Glob_root,MPI_COMM_WORLD,Glob_MPIerr)
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ENDIF
 ENDDO jj_loop
 ENDDO ii_loop
-
-!!!!!!!!!!!!!!output!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 IF(myid==Glob_root)THEN 
 
-!time calculate  
 CALL time_cal_fun(time_st)
-  
-!write present status in log file
 WRITE(2,'(A14,I10,f26.15,A11)')time_st,count,R,'OK'
-
 WRITE(6,Rst)R,gij(1:index)
 
 ENDIF
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ENDDO node_loop
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 IF(myid==Glob_root)THEN
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
   WRITE(2,*)'calculation of gij finished'
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,*)
-  CLOSE(2)
-ENDIF
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-IF(myid==Glob_root)THEN
   CLOSE(2)
   CLOSE(6)
 ENDIF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 CALL pvars_MPImat(Nbasis,0)
 CALL MPI_BARRIER(MPI_COMM_WORLD,GLob_MPIerr)
-
 RETURN
 END SUBROUTINE gij_0_MPIfun
 
@@ -514,11 +491,8 @@ INTEGER,INTENT(IN)::Nbasis
 INTEGER::i,j,k,L,index,myid,ERR,count
 INTEGER::ii,jj,bk,bl,Nproc,bk_cal(2)
 INTEGER,ALLOCATABLE::bl_cal(:)
-  
-REAL(dp)::Eval,Ci(Nbasis)
-REAL(dp)::Rxy,Rz,temp
+REAL(dp)::Rxy,Rz,temp,Eval,Ci(Nbasis)
 REAL(dp)::gij(Glob_Nparticle*(Glob_Nparticle+1)/2)
-
 CHARACTER(14)::time_st
 CHARACTER(100)::Rst
 Rst="(????????f26.15)"
@@ -528,32 +502,28 @@ WRITE(Rst(2:9),fmt="(TL1,I8.8)")2+GLob_Nparticle*(Glob_Nparticle+1)/2
 
 CALL pvars_MPImat(Nbasis,1)
 CALL MPI_COMM_RANK(MPI_COMM_WORLD,myid,Glob_MPIerr)
-
 Nproc=p_Nproc(myid+1)
 ALLOCATE(bl_cal(p_Nmax))
 bl_cal(:)=p_bl_cal(:,myid+1)
-
 CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!calculate the eigen value and eigen vector
 bk_cal(1)=1
 bk_cal(2)=Nbasis
 CALL Eval_MPIfun(Nbasis,Nbasis,bk_cal,Eval,Ci,ERR,1)
-
 IF(myid==Glob_root)THEN 
   OPEN(unit=2,file='log.txt',position='append')
   OPEN(unit=6,file='gij.txt')
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
   WRITE(2,*)'calculation of correaltion function starts:'
   WRITE(2,*)'present total basis number:',Nbasis
   WRITE(2,*)'present energy:',Eval
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,'(A14,2A10,A26,A30)')'time','count','Rxy','Rz','status'
 ENDIF
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 count=0
 node_loop1:DO Rxy=Glob_gij_R(1),Glob_gij_R(3),Glob_gij_R(2)
@@ -565,10 +535,7 @@ ii_loop:DO ii=1,Glob_Nparticle
 jj_loop:DO jj=ii,Glob_Nparticle
 index=index+1
 gij(index)=0.0_dp
-
 IF(Glob_gij_onoff(index)/=0)THEN
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 bk_loop:DO bk=1,Nbasis
 
@@ -586,53 +553,37 @@ ENDIF
 
 ENDDO bk_loop
 
-!sum all part and reduce to Glob_root
 temp=gij(index)
-CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
 CALL MPI_REDUCE(temp,gij(index),1,MPI_DOUBLE_PRECISION,MPI_SUM,Glob_root,MPI_COMM_WORLD,Glob_MPIerr)
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ENDIF
 ENDDO jj_loop
 ENDDO ii_loop
-
-!!!!!!!!!!!!!!output!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 IF(myid==Glob_root)THEN 
 
-!time calculate  
 CALL time_cal_fun(time_st)
-  
-!write present status in log file
 WRITE(2,'(A14,I10,2f26.15,A10)')time_st,count,Rxy,Rz,'OK'
-
 WRITE(6,Rst)Rxy,Rz,gij(1:index)
 
 ENDIF
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ENDDO node_loop2
 ENDDO node_loop1
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 IF(myid==Glob_root)THEN
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
   WRITE(2,*)'calculation of gij finished'
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,*)
-  CLOSE(2)
-ENDIF
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-IF(myid==Glob_root)THEN
   CLOSE(2)
   CLOSE(6)
 ENDIF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 CALL pvars_MPImat(Nbasis,0)
 CALL MPI_BARRIER(MPI_COMM_WORLD,GLob_MPIerr)
-
 RETURN
 END SUBROUTINE gij_1_MPIfun
 
@@ -658,43 +609,37 @@ REAL(dp)::v
 INTEGER::i,j,k,L,ii,jj,index,myid,ERR
 INTEGER::bk,bl,Nproc,bk_cal(2)
 INTEGER,ALLOCATABLE::bl_cal(:)
-    
-REAL(dp)::Eval,Ci(Nbasis)
-REAL(dp)::rij,temp
-  
+REAL(dp)::rij,temp,Eval,Ci(Nbasis) 
 CHARACTER(14)::time_st
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   
 CALL pvars_MPImat(Nbasis,1)
 CALL MPI_COMM_RANK(MPI_COMM_WORLD,myid,Glob_MPIerr)
-  
 Nproc=p_Nproc(myid+1)
 ALLOCATE(bl_cal(p_Nmax))
 bl_cal(:)=p_bl_cal(:,myid+1)
-  
 CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
   
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  
-!calculate the eigen value and eigen vector
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 bk_cal(1)=1
 bk_cal(2)=Nbasis
 CALL Eval_MPIfun(Nbasis,Nbasis,bk_cal,Eval,Ci,ERR,1)
   
 IF(myid==Glob_root)THEN 
   OPEN(unit=2,file='log.txt',position='append')
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
   WRITE(2,*)'calculation of <rij> starts:'
   WRITE(2,*)'present total basis number:',Nbasis
   WRITE(2,*)'present energy:',Eval
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,*)'power of rij:',v
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,'(A14,3A10,A11)')'time','count','pk','pl','<rij>'
 ENDIF
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 index=0
 ii_loop:DO ii=1,Glob_Nparticle
@@ -703,9 +648,7 @@ index=index+1
 rij=0.0_dp
 IF(Glob_rij_onoff(index)/=0)THEN
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 bk_loop:DO bk=1,Nbasis
   
@@ -723,44 +666,33 @@ ENDIF
   
 ENDDO bk_loop
   
-!sum all partial density and reduce to Glob_root
 temp=rij
-CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
 CALL MPI_REDUCE(temp,rij,1,MPI_DOUBLE_PRECISION,MPI_SUM,Glob_root,MPI_COMM_WORLD,Glob_MPIerr)
 
 ENDIF
-!!!!!!!!!!!!!!output!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 IF(myid==Glob_root)THEN 
 
-!time calculate  
 CALL time_cal_fun(time_st)
-
-!write present status in log file
 WRITE(2,'(A14,3I10,f26.16)')time_st,index,ii,jj,rij
   
 ENDIF
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  
 ENDDO jj_loop
 ENDDO ii_loop
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 IF(myid==Glob_root)THEN
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
   WRITE(2,*)'calculation of <rij> finished'
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,*)
   CLOSE(2)
 ENDIF
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-
-IF(myid==Glob_root)CLOSE(2)
 CALL pvars_MPImat(Nbasis,0)
 CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
-
 RETURN
 END SUBROUTINE rij_0_MPIfun
 
@@ -785,43 +717,37 @@ REAL(dp),INTENT(IN)::v
 INTEGER::i,j,k,L,index,myid,ERR
 INTEGER::ii,jj,bk,bl,Nproc,bk_cal(2)
 INTEGER,ALLOCATABLE::bl_cal(:)
-      
-REAL(dp)::Eval,Ci(Nbasis)
-REAL(dp)::rij,temp
-    
+REAL(dp)::rij,temp,Eval,Ci(Nbasis)
 CHARACTER(14)::time_st
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
 CALL pvars_MPImat(Nbasis,1)
 CALL MPI_COMM_RANK(MPI_COMM_WORLD,myid,Glob_MPIerr)
-    
 Nproc=p_Nproc(myid+1)
 ALLOCATE(bl_cal(p_Nmax))
-bl_cal(:)=p_bl_cal(:,myid+1)
-        
+bl_cal(:)=p_bl_cal(:,myid+1)     
 CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
     
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
-!calculate the eigen value and eigen vector
 bk_cal(1)=1
 bk_cal(2)=Nbasis
 CALL Eval_MPIfun(Nbasis,Nbasis,bk_cal,Eval,Ci,ERR,1)
 
 IF(myid==Glob_root)THEN 
   OPEN(unit=2,file='log.txt',position='append')
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
   WRITE(2,*)'calculation of <rij> starts:'
   WRITE(2,*)'present total basis number:',Nbasis
   WRITE(2,*)'present energy:',Eval
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,*)'power of rij:',v
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,'(A14,3A10,A11)')'time','count','pk','pl','<rij>'
 ENDIF
   
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   
 index=0
 ii_loop:DO ii=1,Glob_Nparticle
@@ -831,9 +757,7 @@ rij=0.0_dp
 
 IF(Glob_rij_onoff(index)/=0)THEN
   
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  
-CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 bk_loop:DO bk=1,Nbasis
     
@@ -850,43 +774,34 @@ DO i=1,Nproc
   ENDIF
     
 ENDDO bk_loop
-    
-!sum all partial density and reduce to Glob_root
+  
 temp=rij
-CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
 CALL MPI_REDUCE(temp,rij,1,MPI_DOUBLE_PRECISION,MPI_SUM,Glob_root,MPI_COMM_WORLD,Glob_MPIerr)
     
-!!!!!!!!!!!!!!output!!!!!!!!!!!!!!!!!!!
-
 ENDIF
-
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 IF(myid==Glob_root)THEN 
   
 CALL time_cal_fun(time_st)
 WRITE(2,'(A14,3I10,f26.16)')time_st,index,ii,jj,rij
     
 ENDIF
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ENDDO jj_loop
 ENDDO ii_loop
-  
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 IF(myid==Glob_root)THEN
-  WRITE(2,*)'=================================================' 
+  WRITE(2,*)'==================================================' 
   WRITE(2,*)'calculation of <rij> finished'
-  WRITE(2,*)'================================================='
+  WRITE(2,*)'=================================================='
   WRITE(2,*)
   CLOSE(2)
 ENDIF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-IF(myid==Glob_root)CLOSE(2)
 CALL pvars_MPImat(Nbasis,0)
 CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
-
 RETURN
 END SUBROUTINE rij_1_MPIfun
 

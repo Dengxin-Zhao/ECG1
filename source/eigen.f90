@@ -323,7 +323,6 @@ CALL PDSYGVX(&
 & Cmat,1,1,DESC_C,&     !eigen vector(local)
 & WORK,LWORK,IWORK,LIWORK,IFAIL,ICLUSTR,GAP,INFO) !other paras
 
-IF(myid==0)WRITE(*,*)
 IF(INFO/=0)THEN
   IF(myid==0)WRITE(*,*)INFO,Emat(E_target_num)
   ERR=1

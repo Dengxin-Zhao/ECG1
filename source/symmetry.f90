@@ -74,11 +74,11 @@ WRITE(IRAst2(2:9),fmt="(TL1,I8.8)")Glob_Np
 DO ip=1,Glob_Nperm
   IF(dabs(Glob_symmetry(ip))>0.0_dp)THEN
     WRITE(20,IRAst1)Glob_symmetry(ip),'(',Glob_P(1:Glob_Nparticle,ip),')'
-    WRITE(20,*)'=================================='
+    WRITE(20,*)'=================================================='
     DO i=1,Glob_Np
       WRITE(20,IRAst2)Glob_Tp(i,1:Glob_Np,ip)
     ENDDO
-     WRITE(20,*)'=================================='
+     WRITE(20,*)'=================================================='
   ENDIF
 ENDDO
 
