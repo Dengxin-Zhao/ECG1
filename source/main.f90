@@ -292,17 +292,12 @@ ENDDO
 
 ENDIF
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 END SELECT
 ENDIF
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!structure information output
+!Correlation function gij 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 IF(Glob_task_onoff(2)==1)THEN
-!========================
-!Correlation function gij 
-!========================
 
 IF(Glob_basis_form==0)THEN
   CALL gij_0_MPIfun(Glob_Nbasis_final)
@@ -310,17 +305,17 @@ ELSEIF(Glob_basis_form==1)THEN
   CALL gij_1_MPIfun(Glob_Nbasis_final)
 ENDIF
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!========================
-!interparticle distance <rij>
-!========================
+ENDIF
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!interparticle distance <rij> 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+IF(Glob_task_onoff(3)==1)THEN
 
 IF(Glob_basis_form==0)THEN
   CALL rij_0_MPIfun(Glob_Nbasis_final,Glob_rij_power)
 ELSEIF(Glob_basis_form==1)THEN
   CALL rij_1_MPIfun(Glob_Nbasis_final,Glob_rij_power)
 ENDIF
-
 
 ENDIF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

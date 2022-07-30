@@ -10,9 +10,9 @@ USE auxfun
 !define private matrix and variables used in module matelem.f90
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !================================================
-!private variable used when calculating matrix element(marked by p_ )
-!these variables require allocations once at the begining
-!of the whole program. 
+!private variable used when calculating matrix element
+!(marked by p_ ). These variables require allocations 
+!once at the begining of the whole program. 
 !================================================
 IMPLICIT NONE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -66,8 +66,6 @@ ALLOCATE(p_Ak(Glob_Np,Glob_Np),p_Al(Glob_Np,Glob_Np))
 ALLOCATE(p_tAl(Glob_Np,Glob_Np),p_tAkl(Glob_Np,Glob_Np),p_inv_tAkl(Glob_Np,Glob_Np))
 ALLOCATE(p_dSkl_dLk(Glob_NLk),p_dHkl_dLk(Glob_NLk))
 ALLOCATE(p_dTkl_dLk(Glob_NLk),p_dVkl_coulomb_dLk(Glob_NLK))
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SELECT CASE(Glob_basis_form)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -148,7 +146,7 @@ ENDDO
 !inv_tAkl,det_tAkl
 CALL det_inv_fun(Glob_Np,p_tAkl,p_det_tAkl,p_inv_tAkl)
 
-!Skl,Tkl,Vkl
+!Skl,Tkl,Vkl_Coulomb
 CALL Skl_0_fun()
 CALL Tkl_0_fun()
 CALL Vkl_Coulomb_0_fun()
@@ -224,7 +222,6 @@ CALL det_inv_fun(Glob_Np,p_tAkl,p_det_tAkl,p_inv_tAkl)
 
 !Skl
 CALL Skl_0_fun()
-
 IF(dabs(p_Skl)>Glob_overlap_threshold)THEN
   IF(bk/=bl)THEN
     ERR=1
@@ -298,7 +295,7 @@ ENDDO
 !inv_tAkl,det_tAkl
 CALL det_inv_fun(Glob_Np,p_tAkl,p_det_tAkl,p_inv_tAkl)
   
-!Skl,Tkl,Vkl
+!Skl,Tkl,Vkl_Coulomb
 CALL Skl_0_fun()
 CALL Tkl_0_fun()
 CALL Vkl_Coulomb_0_fun()
@@ -405,8 +402,8 @@ DO i=1,Glob_Np
 ENDDO
 
 !Skl
-temp=dabs(det_Lk*det_Ll)/p_det_tAkl
-p_Skl=(2.0_dp**(1.5_dp*Glob_Np))*temp*dsqrt(temp)
+temp=ABS(det_Lk*det_Ll)/p_det_tAkl
+p_Skl=2.0_dp**(1.5_dp*Glob_Np)*temp*SQRT(temp)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -868,7 +865,7 @@ ENDDO
 temp1=temp**(-1.5_dp)
 
 !exp(-x^2/tr[inv_tAkl*Jij])
-temp2=dexp(-R**2/temp)
+temp2=EXP(-R**2/temp)
     
 !Skl
 gij=gij+Glob_symmetry(ip)*p_Skl*temp1*temp2/(PI*SQRTPI)
@@ -954,7 +951,7 @@ ENDDO
 temp=temp**(v*0.5_dp)   
 
 !<rij>
-rij=rij+Glob_symmetry(ip)*p_Skl*(2.0_dp/SQRTPI)*Gamma(0.5_dp*v+1.5_dp)*temp
+rij=rij+Glob_symmetry(ip)*p_Skl*(2.0_dp/SQRTPI)*GAMMA(0.5_dp*v+1.5_dp)*temp
 
 ENDIF
 ENDDO perm_loop
@@ -1317,8 +1314,8 @@ DO j=1,Glob_Np
       temp1=temp1+inv_Lk(k,i)*inv_Lk(k,j)
       temp2=temp2+inv_Ll(k,i)*inv_Ll(k,j)
     ENDDO
-    temp1=temp1/2.0_dp
-    temp2=temp2/2.0_dp
+    temp1=0.5_dp*temp1
+    temp2=0.5_dp*temp2
     p_inv_Akk(i,j)=temp1
     p_inv_Akk(j,i)=temp1
     p_inv_All(i,j)=temp2
@@ -1340,11 +1337,11 @@ DO i=1,Glob_Np
   p_tau3=p_tau3+p_inv_tAkl(p_mk,i)*p_tvl(i)
 ENDDO
 
-temp=(dabs(det_Lk*det_Ll)/p_det_tAkl)**(1.5_dp)
+temp=(ABS(det_Lk*det_Ll)/p_det_tAkl)**(1.5_dp)
 temp=temp*2.0_dp**(1.5_dp*Glob_Np)
 
 !Skl
-p_Skl=temp*(p_tau3/dsqrt(temp1*temp2))
+p_Skl=temp*(p_tau3/SQRT(temp1*temp2))
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1815,7 +1812,7 @@ INTEGER::i,j,k,L,ip
 REAL(dp)::eta1,eta2,temp,temp1,temp2,R
 
 gij=0.0_dp
-R=dsqrt(Rxy**2+Rz**2)
+R=SQRT(Rxy**2+Rz**2)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1886,7 +1883,7 @@ DO i=1,Glob_Np
 ENDDO
   
 temp1=1.0_dp+(eta2/eta1/p_tau3)*(2.0_dp*(Rz**2)/eta1-1.0_dp)
-temp2=dexp(-R**2/eta1)*(PI*eta1)**(-1.5_dp)
+temp2=EXP(-R**2/eta1)*(PI*eta1)**(-1.5_dp)
 
 gij=gij+Glob_symmetry(ip)*p_Skl*temp1*temp2
 
@@ -1993,7 +1990,7 @@ DO i=1,Glob_Np
 ENDDO
 
 temp=1.0_dp+(v/3.0_dp)*(eta2/eta1/p_tau3)
-temp=temp*Gamma(0.5_dp*v+1.5_dp)*eta1**(0.5_dp*v)
+temp=temp*GAMMA(0.5_dp*v+1.5_dp)*eta1**(0.5_dp*v)
 
 rij=rij+Glob_symmetry(ip)*(2.0_dp/SQRTPI)*p_Skl*temp
 

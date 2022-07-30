@@ -36,8 +36,7 @@ CONTAINS
     
 SUBROUTINE readfile()
 !===============================
-!read and allocate Global variables and matrix
-!from input.txt
+!read and allocate Global variables and matrix from input.txt
 !===============================
 IMPLICIT NONE
 INTEGER::i,j,k
@@ -53,9 +52,8 @@ OPEN(1,file='input.txt',action='read')
 !line seperator
 READ(1,*)preChar(1)
 
-!name of particle system
-!the number of letters must less than 20 
-READ(1,*)preChar(1),GLob_particle_system
+!name of particle system (the number of letters must less than 50) 
+READ(1,*)preChar(1),Glob_particle_system
 
 !system coordinate 
 !=======================
@@ -95,10 +93,8 @@ READ(1,*)preChar(1),Glob_energy_level
 !line separator
 READ(1,*)preChar(1)
 
-!read the number of particle
+!numbers of particle and pseudoparticle
 READ(1,*)preChar(1),Glob_Nparticle
-
-!define psudoparticles
 Glob_Np=Glob_Nparticle-1
 
 !read the masses
@@ -207,7 +203,7 @@ ALLOCATE(Glob_Skl(Glob_Nbasis_final,Glob_Nbasis_final))
 !1: the task is on
 !==========================
 
-ALLOCATE(Glob_task_onoff(2))
+ALLOCATE(Glob_task_onoff(3))
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !========================
@@ -217,7 +213,7 @@ ALLOCATE(Glob_task_onoff(2))
 !line separator
 READ(1,*)preChar(1)
 
-!read task on_off
+!read whether task of parameter optimization is on 
 READ(1,*)preChar(1),preChar(2)
 IF(preChar(2)(1:2)=='on')THEN
   Glob_task_onoff(1)=1
@@ -237,7 +233,6 @@ DO i=1,k
   READ(1,*)
 ENDDO
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ELSEIF(Glob_task_onoff(1)==1)THEN
 
 !read the optimization strategy
@@ -290,15 +285,13 @@ CALL Lk_mode_read()
 ENDIF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !========================
-!read physical output: 
-!1: Correaltion function
-!2: interparticle distance
+!Correaltion function
 !========================
 
 !line seperator
 READ(1,*)preChar(1)
 
-!read wheather the task of physical output is on
+!read wheather the task of Correaltion function is on
 READ(1,*)preChar(1),preChar(2)
 IF(preChar(2)(1:2)=='on')THEN
   Glob_task_onoff(2)=1
@@ -309,35 +302,52 @@ ENDIF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 IF(Glob_task_onoff(2)==0)THEN
 
-DO i=1,6
+DO i=1,3
   READ(1,*)
 ENDDO
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ELSEIF(Glob_task_onoff(2)==1)THEN
-
-!=======================
-!Correlation function 
-!=======================
 
 !line seperator
 READ(1,*)preChar(1)
 
-!read Correlation 
+!read which Correlation to calculate 
 CALL gij_mode_read()
 
 ALLOCATE(Glob_gij_R(3))
 READ(1,*)preChar(1),Glob_gij_R(1),preChar(2)(1:1),Glob_gij_R(2)&
 &,preChar(2)(2:2),Glob_gij_R(3)
 
-!======================
+ENDIF
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!========================
 !interparticle distance
-!======================
+!========================
 
 !line seperator
 READ(1,*)preChar(1)
 
-!read expectation value rij
+!read wheather the task of Correaltion function is on
+READ(1,*)preChar(1),preChar(2)
+IF(preChar(2)(1:2)=='on')THEN
+  Glob_task_onoff(3)=1
+ELSEIF(preChar(2)(1:3)=='off')THEN
+  Glob_task_onoff(3)=0
+ENDIF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+IF(Glob_task_onoff(3)==0)THEN
+
+DO i=1,3
+  READ(1,*)
+ENDDO
+
+ELSEIF(Glob_task_onoff(3)==1)THEN
+
+!line seperator
+READ(1,*)preChar(1)
+
+!read which rij to calculate
 CALL rij_mode_read()
 
 !read the power of rij
@@ -346,10 +356,9 @@ READ(1,*)preChar(1),Glob_rij_power
 ENDIF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+CLOSE(1)
 CALL pvars_matelem()
 CALL MPI_BARRIER(MPI_COMM_WORLD,Glob_MPIerr)
-
-CLOSE(1)
 RETURN
 END SUBROUTINE readfile
 
@@ -375,15 +384,15 @@ IF(myid==Glob_root)THEN
 !CALL write_symmetry_fun()
 
 OPEN(unit=2,file='log.txt')
-WRITE(2,*)'=================================================='
+WRITE(2,*)'==================================================='
 WRITE(2,*)'optimization program is running'
 WRITE(2,*)'the number of running process is:',Glob_numprocs
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-WRITE(2,*)'===================system========================='
+WRITE(2,*)'====================system========================='
 
-WRITE(2,*)'particle_system:',' ',GLob_particle_system(1:20)
+WRITE(2,*)'particle_system:',' ',Glob_particle_system(1:50)
 
 IF(Glob_coordinate_case==1)THEN
   WRITE(2,*)'system_coordinate:',' ','Jacobi'
@@ -391,7 +400,7 @@ ELSEIF(Glob_coordinate_case==2)THEN
   WRITE(2,*)'system_coordinate:',' ','Heavy-center'
 ENDIF
 
-WRITE(2,*)'opt_angular_momentum:',GLob_LM(1:2)
+WRITE(2,*)'opt_angular_momentum:',Glob_LM(1:2)
 
 WRITE(2,*)'opt_energy_level:',Glob_energy_level
 
@@ -426,7 +435,7 @@ ENDDO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-WRITE(2,*)'======================basis========================='
+WRITE(2,*)'======================basis========================'
 
 WRITE(2,*)'start_basis_size:',Glob_Nbasis_start
 
@@ -441,7 +450,7 @@ WRITE(2,*)'overlap_threshold:',Glob_overlap_threshold
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 IF(Glob_task_onoff(1)==1)THEN
 
-WRITE(2,*)'==================opt_para=========================='
+WRITE(2,*)'==================opt_para========================='
 
 WRITE(2,*)'task_on_off:',' ','on'
 
@@ -483,7 +492,7 @@ ENDIF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 IF(Glob_task_onoff(2)==1)THEN
 
-WRITE(2,*)'================structure_info===================='
+WRITE(2,*)'===================correlation====================='
 
 WRITE(2,*)'task_on_off:',' ','on'
 
@@ -491,18 +500,22 @@ WRITE(2,*)'task_on_off:',' ','on'
 
 WRITE(2,*)'==============================='
 
-WRITE(2,*)'correlation_Gij:'
-
 WRITE(2,'(A17,A2,A100)')'correlation_Gij:','  ',p_gij_mode_Char
 
 WRITE(2,'(A10,f10.5,A5,f10.5,A5,f10.5)')'meshgrid:',Glob_gij_R(1)&
 &,':',Glob_gij_R(2),':',Glob_gij_R(3)
 
+ENDIF
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+IF(Glob_task_onoff(3)==1)THEN
+
+WRITE(2,*)'=====================distance======================'
+
+WRITE(2,*)'task_on_off:',' ','on'
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 WRITE(2,*)'==============================='
-
-WRITE(2,*)'particle_distance:'
 
 WRITE(2,'(A19,A2,A100)')'particle_distance:','  ',p_rij_mode_Char
 

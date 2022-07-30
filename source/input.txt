@@ -15,12 +15,12 @@ spin_config_num: 2
 start_basis_size: 100
 final_basis_size: 100
 increase_per_time:  0
-init_nonlinear_para:  0
+init_nonlinear_para: 1
 overlap_threshold: 0.99d0
 ==================opt_para========================
-task_on_off: on
+task_on_off: off
 opt_strategy:  3
-rounds_limit: 100000
+rounds_limit: 1
 ===============================
 gvm_batch_num:  1
 gvm_opt_ITmax:  20
@@ -32,13 +32,15 @@ svm_opt_rounds: 1
 Lk_mode_num: 1  
 5  <12~45>
 0.15d0  0.15d0  0   0    0
-============structure_info=======================
+==================correlation=====================
 task_on_off: off
 ===============================
-correlation_Gij:  <12>
-meshgrid: 0.0 : 0.01 : 0.01d0
-==============================
+correlation_Gij: <15>
+meshgrid: 0.0 : 0.01 : 0.01
+===================distance=======================
+task_on_off: on
+===============================
 particle_distance: <15>
-power_of_rij:  1.d0
-=================================================
+power_of_rij: 2.d0
+==================================================
 
